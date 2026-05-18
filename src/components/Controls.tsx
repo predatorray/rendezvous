@@ -1,4 +1,4 @@
-import { Box, IconButton, Stack, Tooltip, useTheme } from '@mui/material';
+import { Box, IconButton, keyframes, Stack, Tooltip, useTheme } from '@mui/material';
 import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
 import VideocamIcon from '@mui/icons-material/Videocam';
@@ -16,7 +16,14 @@ interface Props {
   onShare: () => void;
   onLeave: () => void;
   unreadCount: number;
+  isSpeaking?: boolean;
 }
+
+const speakingPulse = keyframes`
+  0%   { transform: scale(1);    box-shadow: 0 0 0 0   rgba(45,140,255,0.55); }
+  50%  { transform: scale(1.12); box-shadow: 0 0 0 10px rgba(45,140,255,0);   }
+  100% { transform: scale(1);    box-shadow: 0 0 0 0   rgba(45,140,255,0);   }
+`;
 
 function PillButton({
   label,
@@ -24,12 +31,14 @@ function PillButton({
   onClick,
   children,
   danger,
+  pulsing,
 }: {
   label: string;
   active: boolean;
   onClick: () => void;
   children: React.ReactNode;
   danger?: boolean;
+  pulsing?: boolean;
 }) {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -49,6 +58,12 @@ function PillButton({
             ? neutralBg
             : 'rgba(220,38,38,0.85)',
           color: danger || !active ? '#fff' : 'text.primary',
+          transition: 'transform 120ms ease, box-shadow 120ms ease',
+          ...(pulsing && {
+            animation: `${speakingPulse} 1.1s ease-out infinite`,
+            bgcolor: 'rgba(45,140,255,0.18)',
+            color: '#2D8CFF',
+          }),
           '&:hover': {
             bgcolor: danger
               ? '#b91c1c'
@@ -73,6 +88,7 @@ export default function Controls({
   onShare,
   onLeave,
   unreadCount,
+  isSpeaking,
 }: Props) {
   return (
     <Box
@@ -95,6 +111,7 @@ export default function Controls({
           label={audioEnabled ? 'Mute' : 'Unmute'}
           active={audioEnabled}
           onClick={onToggleAudio}
+          pulsing={audioEnabled && isSpeaking}
         >
           {audioEnabled ? <MicIcon /> : <MicOffIcon />}
         </PillButton>

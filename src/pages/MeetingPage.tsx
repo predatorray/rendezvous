@@ -17,6 +17,7 @@ import Controls from '../components/Controls';
 import ShareDialog from '../components/ShareDialog';
 import ThemeToggle from '../components/ThemeToggle';
 import { useMeeting } from '../peer/useMeeting';
+import { useIsSpeaking } from '../peer/useIsSpeaking';
 import { isValidMeetingCode } from '../util/code';
 import { getStoredName, setStoredName } from '../util/storage';
 
@@ -113,6 +114,7 @@ function LiveMeeting({
 }) {
   const navigate = useNavigate();
   const meeting = useMeeting({ code, name, isHost });
+  const isSpeaking = useIsSpeaking(meeting.localStream, meeting.audioEnabled);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
@@ -314,6 +316,7 @@ function LiveMeeting({
             onShare={() => setShareOpen(true)}
             onLeave={meeting.leave}
             unreadCount={unread}
+            isSpeaking={isSpeaking}
           />
         </Box>
 
