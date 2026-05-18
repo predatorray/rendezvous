@@ -21,6 +21,7 @@ import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import TelegramIcon from '@mui/icons-material/Telegram';
 import RedditIcon from '@mui/icons-material/Reddit';
 import EmailIcon from '@mui/icons-material/Email';
+import { useT } from '../i18n/useLangContext';
 
 interface Props {
   open: boolean;
@@ -32,7 +33,7 @@ interface ShareTarget {
   name: string;
   color: string;
   Icon: React.ComponentType<{ fontSize?: 'small' | 'inherit' | 'medium' | 'large' }>;
-  href: (url: string, text: string) => string;
+  href: (url: string, text: string, subject: string) => string;
 }
 
 const TARGETS: ShareTarget[] = [
@@ -75,16 +76,18 @@ const TARGETS: ShareTarget[] = [
     name: 'Email',
     color: '#6B7280',
     Icon: EmailIcon,
-    href: (url, text) =>
-      `mailto:?subject=${encodeURIComponent('Join my meeting')}&body=${encodeURIComponent(`${text}\n\n${url}`)}`,
+    href: (url, text, subject) =>
+      `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(`${text}\n\n${url}`)}`,
   },
 ];
 
 export default function ShareDialog({ open, onClose, code }: Props) {
+  const t = useT();
   const [copiedField, setCopiedField] = useState<'code' | 'link' | null>(null);
 
   const link = `${window.location.origin}${window.location.pathname}#/m/${code}`;
-  const shareText = `Join my meeting (code: ${code})`;
+  const shareText = t.share_text(code);
+  const shareSubject = t.share_subject;
   const canNativeShare =
     typeof navigator !== 'undefined' && typeof navigator.share === 'function';
 
@@ -107,7 +110,7 @@ export default function ShareDialog({ open, onClose, code }: Props) {
 
   const handleNativeShare = async () => {
     try {
-      await navigator.share({ title: 'Join my meeting', text: shareText, url: link });
+      await navigator.share({ title: shareSubject, text: shareText, url: link });
     } catch {
       // user cancelled
     }
@@ -115,12 +118,12 @@ export default function ShareDialog({ open, onClose, code }: Props) {
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle>Invite others</DialogTitle>
+      <DialogTitle>{t.share_title}</DialogTitle>
       <DialogContent>
         <Stack spacing={2.5} sx={{ pt: 1 }}>
           <Stack spacing={0.5}>
             <Typography variant="caption" sx={{ opacity: 0.7 }}>
-              Meeting code
+              {t.share_meeting_code}
             </Typography>
             <Stack direction="row" spacing={1}>
               <TextField
@@ -136,7 +139,7 @@ export default function ShareDialog({ open, onClose, code }: Props) {
                   },
                 }}
               />
-              <Tooltip title={copiedField === 'code' ? 'Copied' : 'Copy code'}>
+              <Tooltip title={copiedField === 'code' ? t.share_copied : t.share_copy_code}>
                 <IconButton onClick={() => copy(code, 'code')}>
                   {copiedField === 'code' ? <CheckIcon /> : <ContentCopyIcon />}
                 </IconButton>
@@ -146,7 +149,7 @@ export default function ShareDialog({ open, onClose, code }: Props) {
 
           <Stack spacing={0.5}>
             <Typography variant="caption" sx={{ opacity: 0.7 }}>
-              Invite link
+              {t.share_invite_link}
             </Typography>
             <Stack direction="row" spacing={1}>
               <TextField
@@ -156,7 +159,7 @@ export default function ShareDialog({ open, onClose, code }: Props) {
                 InputProps={{ readOnly: true }}
                 onFocus={(e) => e.target.select()}
               />
-              <Tooltip title={copiedField === 'link' ? 'Copied' : 'Copy link'}>
+              <Tooltip title={copiedField === 'link' ? t.share_copied : t.share_copy_link}>
                 <IconButton onClick={() => copy(link, 'link')}>
                   {copiedField === 'link' ? <CheckIcon /> : <ContentCopyIcon />}
                 </IconButton>
@@ -169,17 +172,17 @@ export default function ShareDialog({ open, onClose, code }: Props) {
               variant="caption"
               sx={{ opacity: 0.7, display: 'block', mb: 1 }}
             >
-              Share via
+              {t.share_via}
             </Typography>
             <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', rowGap: 1 }}>
               {TARGETS.map(({ name, color, Icon, href }) => (
-                <Tooltip key={name} title={`Share on ${name}`}>
+                <Tooltip key={name} title={t.share_on(name)}>
                   <IconButton
                     component="a"
-                    href={href(link, shareText)}
+                    href={href(link, shareText, shareSubject)}
                     target="_blank"
                     rel="noopener noreferrer"
-                    aria-label={`Share on ${name}`}
+                    aria-label={t.share_on(name)}
                     sx={{
                       color: '#fff',
                       bgcolor: color,
@@ -191,10 +194,10 @@ export default function ShareDialog({ open, onClose, code }: Props) {
                 </Tooltip>
               ))}
               {canNativeShare && (
-                <Tooltip title="More…">
+                <Tooltip title={t.share_more}>
                   <IconButton
                     onClick={handleNativeShare}
-                    aria-label="More sharing options"
+                    aria-label={t.share_more_aria}
                     sx={{
                       color: 'text.primary',
                       border: '1px solid',
@@ -211,7 +214,7 @@ export default function ShareDialog({ open, onClose, code }: Props) {
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose} sx={{ textTransform: 'none' }}>
-          Done
+          {t.share_done}
         </Button>
       </DialogActions>
     </Dialog>

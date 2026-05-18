@@ -3,6 +3,7 @@ import { Avatar, Box, Stack, Typography } from '@mui/material';
 import MicOffIcon from '@mui/icons-material/MicOff';
 import StarIcon from '@mui/icons-material/Star';
 import { Member } from '../types';
+import { useT } from '../i18n/useLangContext';
 
 interface Props {
   member: Member;
@@ -30,6 +31,7 @@ function colorOf(name: string): string {
 
 export default function VideoTile({ member, stream, isSelf, compact }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const t = useT();
 
   useEffect(() => {
     const el = videoRef.current;
@@ -118,7 +120,7 @@ export default function VideoTile({ member, stream, isSelf, compact }: Props) {
           {member.isHost && (
             <StarIcon
               sx={{ fontSize: { xs: 12, sm: 14 }, color: '#FFD24C' }}
-              titleAccess="Host"
+              titleAccess={t.tile_host}
             />
           )}
           <Typography
@@ -131,7 +133,7 @@ export default function VideoTile({ member, stream, isSelf, compact }: Props) {
             }}
           >
             {member.name}
-            {isSelf ? ' (you)' : ''}
+            {isSelf ? ` ${t.tile_you}` : ''}
           </Typography>
         </Stack>
       )}

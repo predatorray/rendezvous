@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { MeetingClient } from './MeetingClient';
 import { Member, TimelineItem } from '../types';
+import { useT } from '../i18n/useLangContext';
 
 interface UseMeetingArgs {
   code: string;
@@ -56,6 +57,7 @@ export function useMeeting({
   name,
   isHost,
 }: UseMeetingArgs): UseMeetingState {
+  const t = useT();
   const [phase, setPhase] = useState<MeetingPhase>('preparing');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [endedReason, setEndedReason] = useState<
@@ -129,7 +131,7 @@ export function useMeeting({
     unsubs.push(
       client.on('ended', (reason, detail) => {
         if (reason === 'error') {
-          setErrorMessage(detail ?? 'An error occurred.');
+          setErrorMessage(detail ?? t.meeting_error_default);
           setPhase('error');
         } else {
           setEndedReason(reason);
@@ -158,10 +160,10 @@ export function useMeeting({
         console.error('Meeting start failed', e);
         const detail =
           e?.type === 'unavailable-id'
-            ? 'This meeting code is already in use. Try another.'
+            ? t.meeting_error_unavailable_id
             : e?.type === 'peer-unavailable'
-            ? 'Meeting not found.'
-            : e?.message ?? 'Failed to start meeting.';
+            ? t.meeting_error_peer_unavailable
+            : e?.message ?? t.meeting_error_start;
         setErrorMessage(detail);
         setPhase('error');
       }

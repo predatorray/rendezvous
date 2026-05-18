@@ -1,0 +1,94 @@
+const zh = {
+  lang: '中文',
+
+  home_tagline: '对话相聚之处，无需服务器。',
+  home_description:
+    '几秒钟内创建私密视频房间。纯点对点 WebRTC —— 无需账号、无需服务器、无中间人。只需你、你的伙伴，以及一个六字母的代码。',
+  home_your_name: '你的名字',
+  home_host: '发起会议',
+  home_or_join: '或加入',
+  home_meeting_code: '会议代码',
+  home_meeting_code_placeholder: 'abcxyz',
+  home_join: '加入',
+  home_error_name: '请输入你的名字。',
+  home_error_code: '会议代码必须是 6 个字母。',
+  home_footnote: '基于 WebRTC 的点对点连接。无账号，无服务器。',
+
+  footer_author: '作者',
+  footer_github: 'GitHub',
+  footer_feedback: '反馈',
+
+  meeting_invalid_code: '无效的会议代码',
+  meeting_back_home: '返回首页',
+  meeting_join_title: '加入会议',
+  meeting_enter_name: '请输入你的名字以继续。',
+  meeting_your_name: '你的名字',
+  meeting_join: '加入',
+
+  meeting_preparing: '正在准备摄像头和麦克风…',
+  meeting_starting: '正在开始会议…',
+  meeting_joining: '正在加入会议…',
+
+  meeting_error_title: '无法加入会议',
+  meeting_error_default: '发生了错误。',
+  meeting_error_unavailable_id: '该会议代码正在被使用，请换一个。',
+  meeting_error_peer_unavailable: '未找到会议。',
+  meeting_error_start: '无法开始会议。',
+
+  meeting_ended_host: '主持人已结束会议',
+  meeting_ended_self: '你已离开会议',
+
+  meeting_share_invite_aria: '分享邀请',
+  meeting_person: '人',
+  meeting_people: '人',
+
+  meeting_end_for_everyone: '为所有人结束会议？',
+  meeting_leave_title: '离开会议？',
+  meeting_end_for_everyone_body: '你是主持人。结束会议将断开所有人的连接。',
+  meeting_leave_body: '你将从这个会议中断开连接。',
+  meeting_cancel: '取消',
+  meeting_end: '结束会议',
+  meeting_leave: '离开',
+
+  chat_title: '聊天',
+  chat_close: '关闭聊天',
+  chat_send: '发送消息',
+  chat_placeholder: '消息…',
+  chat_empty: '还没有消息。',
+  chat_you: '你',
+  chat_system_joined: (name: string) => `${name} 加入了会议`,
+  chat_system_left: (name: string) => `${name} 离开了会议`,
+
+  controls_mute: '静音',
+  controls_unmute: '取消静音',
+  controls_stop_video: '停止视频',
+  controls_start_video: '开启视频',
+  controls_chat: '聊天',
+  controls_share: '分享邀请',
+  controls_leave: '离开',
+
+  share_title: '邀请他人',
+  share_meeting_code: '会议代码',
+  share_copy_code: '复制代码',
+  share_copy_link: '复制链接',
+  share_copied: '已复制',
+  share_invite_link: '邀请链接',
+  share_via: '分享至',
+  share_more: '更多…',
+  share_more_aria: '更多分享选项',
+  share_done: '完成',
+  share_on: (network: string) => `分享到 ${network}`,
+  share_subject: '加入我的会议',
+  share_text: (code: string) => `加入我的会议（代码：${code}）`,
+
+  tile_you: '（你）',
+  tile_host: '主持人',
+
+  theme_switch_to: (mode: string) => `切换到${mode}模式`,
+  theme_dark: '深色',
+  theme_light: '浅色',
+
+  language_change: '切换语言',
+} as const;
+
+export default zh;

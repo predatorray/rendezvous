@@ -2,6 +2,7 @@ import { IconButton, Tooltip } from '@mui/material';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import { useThemeMode } from '../util/themeMode';
+import { useT } from '../i18n/useLangContext';
 
 interface Props {
   size?: 'small' | 'medium' | 'large';
@@ -10,14 +11,16 @@ interface Props {
 
 export default function ThemeToggle({ size = 'small', edge = false }: Props) {
   const { mode, toggle } = useThemeMode();
-  const next = mode === 'dark' ? 'light' : 'dark';
+  const t = useT();
+  const nextLabel = mode === 'dark' ? t.theme_light : t.theme_dark;
+  const label = t.theme_switch_to(nextLabel);
   return (
-    <Tooltip title={`Switch to ${next} mode`} arrow>
+    <Tooltip title={label} arrow>
       <IconButton
         onClick={toggle}
         size={size}
         edge={edge}
-        aria-label={`Switch to ${next} mode`}
+        aria-label={label}
       >
         {mode === 'dark' ? (
           <LightModeIcon fontSize={size === 'small' ? 'small' : 'medium'} />

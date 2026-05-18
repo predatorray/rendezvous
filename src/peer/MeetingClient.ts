@@ -235,6 +235,7 @@ export class MeetingClient {
           text: `${member.name} joined`,
           ts: Date.now(),
           system: true,
+          event: { kind: 'joined', name: member.name },
         };
         // Welcome the new client with current state & history.
         const welcome: WireMessage = {
@@ -291,6 +292,7 @@ export class MeetingClient {
       text: `${member.name} left`,
       ts: Date.now(),
       system: true,
+      event: { kind: 'left', name: member.name },
     };
     this.recordAndBroadcastTimeline(leftSys);
     this.broadcastRoster();

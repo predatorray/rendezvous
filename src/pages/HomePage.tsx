@@ -21,11 +21,14 @@ import {
   normalizeMeetingCode,
 } from '../util/code';
 import { getStoredName, setStoredName } from '../util/storage';
+import { useT } from '../i18n/useLangContext';
+import LanguageMenu from '../i18n/LanguageMenu';
 
 type Mode = 'host' | 'join';
 
 export default function HomePage() {
   const navigate = useNavigate();
+  const t = useT();
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -50,7 +53,7 @@ export default function HomePage() {
   const handleHost = () => {
     setError(null);
     if (!canHost) {
-      setError('Please enter your name.');
+      setError(t.home_error_name);
       return;
     }
     proceed('host', generateMeetingCode());
@@ -59,11 +62,11 @@ export default function HomePage() {
   const handleJoin = () => {
     setError(null);
     if (!canHost) {
-      setError('Please enter your name.');
+      setError(t.home_error_name);
       return;
     }
     if (!isValidMeetingCode(normalizedCode)) {
-      setError('Meeting code must be 6 letters.');
+      setError(t.home_error_code);
       return;
     }
     proceed('join', normalizedCode);
@@ -80,7 +83,17 @@ export default function HomePage() {
         position: 'relative',
       }}
     >
-      <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 16,
+          right: 16,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+        }}
+      >
+        <LanguageMenu />
         <ThemeToggle size="medium" />
       </Box>
       <Container
@@ -127,15 +140,13 @@ export default function HomePage() {
                 letterSpacing: 0.5,
               }}
             >
-              Where conversations meet, serverlessly.
+              {t.home_tagline}
             </Typography>
             <Typography
               variant="body1"
               sx={{ opacity: 0.7, maxWidth: 460, lineHeight: 1.7 }}
             >
-              Spin up a private video room in seconds. Pure peer-to-peer
-              WebRTC — no accounts, no servers, no middlemen. Just you, your
-              people, and a six-letter code.
+              {t.home_description}
             </Typography>
           </Stack>
 
@@ -143,7 +154,7 @@ export default function HomePage() {
             <Paper elevation={0} sx={{ p: { xs: 3, md: 4 }, borderRadius: 3 }}>
               <Stack spacing={3}>
                 <TextField
-                  label="Your name"
+                  label={t.home_your_name}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   fullWidth
@@ -160,17 +171,17 @@ export default function HomePage() {
                   onClick={handleHost}
                   sx={{ py: 1.5, textTransform: 'none', fontWeight: 500 }}
                 >
-                  Host new meeting
+                  {t.home_host}
                 </Button>
 
-                <Divider sx={{ opacity: 0.4 }}>or join</Divider>
+                <Divider sx={{ opacity: 0.4 }}>{t.home_or_join}</Divider>
 
                 <Stack direction="row" spacing={1.5}>
                   <TextField
-                    label="Meeting code"
+                    label={t.home_meeting_code}
                     value={code}
                     onChange={(e) => setCode(e.target.value)}
-                    placeholder="abcxyz"
+                    placeholder={t.home_meeting_code_placeholder}
                     fullWidth
                     inputProps={{
                       maxLength: 12,
@@ -191,7 +202,7 @@ export default function HomePage() {
                     onClick={handleJoin}
                     sx={{ textTransform: 'none', flexShrink: 0, px: 3 }}
                   >
-                    Join
+                    {t.home_join}
                   </Button>
                 </Stack>
 
@@ -212,7 +223,7 @@ export default function HomePage() {
                 opacity: 0.5,
               }}
             >
-              Peer-to-peer via WebRTC. No accounts, no servers.
+              {t.home_footnote}
             </Typography>
           </Box>
         </Box>
@@ -228,10 +239,10 @@ export default function HomePage() {
         }}
       >
         {[
-          { label: 'Author', href: 'https://www.predatorray.me' },
-          { label: 'GitHub', href: 'https://github.com/predatorray/rendezvous' },
+          { label: t.footer_author, href: 'https://www.predatorray.me' },
+          { label: t.footer_github, href: 'https://github.com/predatorray/rendezvous' },
           {
-            label: 'Feedback',
+            label: t.footer_feedback,
             href: 'https://github.com/predatorray/rendezvous/issues',
           },
         ].map((link) => (

@@ -6,6 +6,7 @@ import VideocamOffIcon from '@mui/icons-material/VideocamOff';
 import ChatIcon from '@mui/icons-material/Chat';
 import IosShareIcon from '@mui/icons-material/IosShare';
 import CallEndIcon from '@mui/icons-material/CallEnd';
+import { useT } from '../i18n/useLangContext';
 
 interface Props {
   audioEnabled: boolean;
@@ -90,6 +91,7 @@ export default function Controls({
   unreadCount,
   isSpeaking,
 }: Props) {
+  const t = useT();
   return (
     <Box
       sx={{
@@ -108,7 +110,7 @@ export default function Controls({
         alignItems="center"
       >
         <PillButton
-          label={audioEnabled ? 'Mute' : 'Unmute'}
+          label={audioEnabled ? t.controls_mute : t.controls_unmute}
           active={audioEnabled}
           onClick={onToggleAudio}
           pulsing={audioEnabled && isSpeaking}
@@ -116,13 +118,13 @@ export default function Controls({
           {audioEnabled ? <MicIcon /> : <MicOffIcon />}
         </PillButton>
         <PillButton
-          label={videoEnabled ? 'Stop video' : 'Start video'}
+          label={videoEnabled ? t.controls_stop_video : t.controls_start_video}
           active={videoEnabled}
           onClick={onToggleVideo}
         >
           {videoEnabled ? <VideocamIcon /> : <VideocamOffIcon />}
         </PillButton>
-        <PillButton label="Chat" active={true} onClick={onToggleChat}>
+        <PillButton label={t.controls_chat} active={true} onClick={onToggleChat}>
           <Box sx={{ position: 'relative' }}>
             <ChatIcon />
             {unreadCount > 0 && (
@@ -149,11 +151,11 @@ export default function Controls({
             )}
           </Box>
         </PillButton>
-        <PillButton label="Share invite" active={true} onClick={onShare}>
+        <PillButton label={t.controls_share} active={true} onClick={onShare}>
           <IosShareIcon />
         </PillButton>
         <Box sx={{ width: { xs: 4, sm: 12 } }} />
-        <PillButton label="Leave" active={true} onClick={onLeave} danger>
+        <PillButton label={t.controls_leave} active={true} onClick={onLeave} danger>
           <CallEndIcon />
         </PillButton>
       </Stack>

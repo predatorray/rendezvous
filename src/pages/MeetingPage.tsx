@@ -25,11 +25,14 @@ import { useMeeting } from '../peer/useMeeting';
 import { useIsSpeaking } from '../peer/useIsSpeaking';
 import { isValidMeetingCode } from '../util/code';
 import { getStoredName, setStoredName } from '../util/storage';
+import { useT } from '../i18n/useLangContext';
+import LanguageMenu from '../i18n/LanguageMenu';
 
 export default function MeetingPage() {
   const { code = '' } = useParams<{ code: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const t = useT();
 
   // Lock host flag at mount: subsequent URL changes shouldn't flip you
   // from host to guest mid-meeting.
@@ -48,10 +51,10 @@ export default function MeetingPage() {
     return (
       <CenteredCard>
         <Typography variant="h6" gutterBottom>
-          Invalid meeting code
+          {t.meeting_invalid_code}
         </Typography>
         <Button variant="contained" onClick={() => navigate('/')}>
-          Back to home
+          {t.meeting_back_home}
         </Button>
       </CenteredCard>
     );
@@ -61,17 +64,17 @@ export default function MeetingPage() {
     return (
       <CenteredCard>
         <Typography variant="h6" gutterBottom>
-          Join meeting <code style={{ letterSpacing: 2 }}>{normalizedCode}</code>
+          {t.meeting_join_title} <code style={{ letterSpacing: 2 }}>{normalizedCode}</code>
         </Typography>
         <Typography variant="body2" sx={{ opacity: 0.7, mb: 3 }}>
-          Please enter your name to continue.
+          {t.meeting_enter_name}
         </Typography>
         <Stack spacing={2}>
           <Box
             component="input"
             value={nameDraft}
             onChange={(e: any) => setNameDraft(e.target.value)}
-            placeholder="Your name"
+            placeholder={t.meeting_your_name}
             sx={{
               p: 1.5,
               fontSize: 16,
@@ -96,7 +99,7 @@ export default function MeetingPage() {
             }}
             sx={{ textTransform: 'none' }}
           >
-            Join
+            {t.meeting_join}
           </Button>
         </Stack>
       </CenteredCard>
@@ -118,6 +121,7 @@ function LiveMeeting({
   isHost: boolean;
 }) {
   const navigate = useNavigate();
+  const t = useT();
   const meeting = useMeeting({ code, name, isHost });
   const isSpeaking = useIsSpeaking(meeting.localStream, meeting.audioEnabled);
   const theme = useTheme();
@@ -183,10 +187,10 @@ function LiveMeeting({
           <CircularProgress size={28} />
           <Typography variant="body1">
             {meeting.phase === 'preparing'
-              ? 'Preparing your camera and microphone…'
+              ? t.meeting_preparing
               : isHost
-              ? 'Starting meeting…'
-              : 'Joining meeting…'}
+              ? t.meeting_starting
+              : t.meeting_joining}
           </Typography>
         </Stack>
       </CenteredCard>
@@ -197,13 +201,13 @@ function LiveMeeting({
     return (
       <CenteredCard>
         <Typography variant="h6" gutterBottom>
-          Couldn’t join the meeting
+          {t.meeting_error_title}
         </Typography>
         <Typography variant="body2" sx={{ opacity: 0.7, mb: 3 }}>
           {meeting.errorMessage}
         </Typography>
         <Button variant="contained" onClick={() => navigate('/')}>
-          Back to home
+          {t.meeting_back_home}
         </Button>
       </CenteredCard>
     );
@@ -214,11 +218,11 @@ function LiveMeeting({
       <CenteredCard>
         <Typography variant="h6" gutterBottom>
           {meeting.endedReason === 'host-left'
-            ? 'The host ended the meeting'
-            : 'You left the meeting'}
+            ? t.meeting_ended_host
+            : t.meeting_ended_self}
         </Typography>
         <Button variant="contained" onClick={() => navigate('/')}>
-          Back to home
+          {t.meeting_back_home}
         </Button>
       </CenteredCard>
     );
@@ -296,11 +300,12 @@ function LiveMeeting({
               spacing={1}
               sx={{ ml: 'auto' }}
             >
+              <LanguageMenu variant="icon" />
               <ThemeToggle />
               <IconButton
                 size="small"
                 onClick={() => setShareOpen(true)}
-                aria-label="Share invite"
+                aria-label={t.meeting_share_invite_aria}
               >
                 <IosShareIcon fontSize="small" />
               </IconButton>
@@ -310,7 +315,7 @@ function LiveMeeting({
                 sx={{ opacity: 0.6 }}
               >
                 {meeting.members.length}{' '}
-                {meeting.members.length === 1 ? 'person' : 'people'}
+                {meeting.members.length === 1 ? t.meeting_person : t.meeting_people}
               </Typography>
             </Stack>
           </Stack>
@@ -352,19 +357,17 @@ function LiveMeeting({
 
       <Dialog open={leaveOpen} onClose={() => setLeaveOpen(false)}>
         <DialogTitle>
-          {isHost ? 'End meeting for everyone?' : 'Leave meeting?'}
+          {isHost ? t.meeting_end_for_everyone : t.meeting_leave_title}
         </DialogTitle>
         <DialogContent>
           <DialogContentText>
-            {isHost
-              ? 'You are the host. Ending the meeting will disconnect everyone.'
-              : 'You will be disconnected from this meeting.'}
+            {isHost ? t.meeting_end_for_everyone_body : t.meeting_leave_body}
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setLeaveOpen(false)}>Cancel</Button>
+          <Button onClick={() => setLeaveOpen(false)}>{t.meeting_cancel}</Button>
           <Button onClick={confirmLeave} color="error" variant="contained" autoFocus>
-            {isHost ? 'End meeting' : 'Leave'}
+            {isHost ? t.meeting_end : t.meeting_leave}
           </Button>
         </DialogActions>
       </Dialog>

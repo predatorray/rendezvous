@@ -11,6 +11,7 @@ import {
 import CloseIcon from '@mui/icons-material/Close';
 import SendIcon from '@mui/icons-material/Send';
 import { TimelineItem, isSystem } from '../types';
+import { useT } from '../i18n/useLangContext';
 
 interface Props {
   open: boolean;
@@ -38,6 +39,7 @@ export default function ChatDrawer({
   width = 340,
   variant = 'persistent',
 }: Props) {
+  const t = useT();
   const [draft, setDraft] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -93,9 +95,9 @@ export default function ChatDrawer({
           sx={{ px: 2, py: 1.5 }}
         >
           <Typography variant="subtitle1" sx={{ fontWeight: 600 }}>
-            Chat
+            {t.chat_title}
           </Typography>
-          <IconButton size="small" onClick={onClose} aria-label="Close chat">
+          <IconButton size="small" onClick={onClose} aria-label={t.chat_close}>
             <CloseIcon fontSize="small" />
           </IconButton>
         </Stack>
@@ -115,11 +117,16 @@ export default function ChatDrawer({
               variant="body2"
               sx={{ opacity: 0.5, textAlign: 'center', mt: 4 }}
             >
-              No messages yet.
+              {t.chat_empty}
             </Typography>
           )}
           {timeline.map((item) => {
             if (isSystem(item)) {
+              const text = item.event
+                ? item.event.kind === 'joined'
+                  ? t.chat_system_joined(item.event.name)
+                  : t.chat_system_left(item.event.name)
+                : item.text;
               return (
                 <Box
                   key={item.id}
@@ -132,7 +139,7 @@ export default function ChatDrawer({
                     variant="caption"
                     sx={{ opacity: 0.55, fontStyle: 'italic' }}
                   >
-                    {item.text} · {formatTime(item.ts)}
+                    {text} · {formatTime(item.ts)}
                   </Typography>
                 </Box>
               );
@@ -153,7 +160,7 @@ export default function ChatDrawer({
                       color: isSelf ? 'primary.light' : 'text.primary',
                     }}
                   >
-                    {isSelf ? 'You' : item.fromName}
+                    {isSelf ? t.chat_you : item.fromName}
                   </Typography>
                   <Typography variant="caption" sx={{ opacity: 0.5 }}>
                     {formatTime(item.ts)}
@@ -179,7 +186,7 @@ export default function ChatDrawer({
             <TextField
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
-              placeholder="Message…"
+              placeholder={t.chat_placeholder}
               fullWidth
               multiline
               maxRows={4}
@@ -191,7 +198,7 @@ export default function ChatDrawer({
               color="primary"
               onClick={handleSend}
               disabled={!draft.trim()}
-              aria-label="Send message"
+              aria-label={t.chat_send}
             >
               <SendIcon />
             </IconButton>

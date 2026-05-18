@@ -14,11 +14,16 @@ export interface ChatMessage {
   ts: number;
 }
 
+export type SystemEvent =
+  | { kind: 'joined'; name: string }
+  | { kind: 'left'; name: string };
+
 export interface SystemMessage {
   id: string;
   text: string;
   ts: number;
   system: true;
+  event?: SystemEvent;
 }
 
 export type TimelineItem = ChatMessage | SystemMessage;
