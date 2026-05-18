@@ -246,7 +246,6 @@ function LiveMeeting({
           <Stack
             direction="row"
             alignItems="center"
-            spacing={1}
             sx={{
               px: { xs: 1, sm: 2 },
               py: { xs: 0.75, sm: 1 },
@@ -256,27 +255,29 @@ function LiveMeeting({
               minHeight: 44,
             }}
           >
-            <Typography
-              variant="subtitle2"
-              noWrap
-              sx={{
-                fontWeight: 600,
-                display: { xs: 'none', sm: 'inline' },
-              }}
-            >
-              Rendezvous
-            </Typography>
-            <Typography
-              variant="caption"
-              noWrap
-              sx={{
-                opacity: 0.7,
-                fontFamily: 'ui-monospace, Menlo, monospace',
-                letterSpacing: 1.5,
-              }}
-            >
-              {code}
-            </Typography>
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Typography
+                variant="subtitle2"
+                noWrap
+                sx={{
+                  fontWeight: 600,
+                  display: { xs: 'none', sm: 'inline' },
+                }}
+              >
+                Rendezvous
+              </Typography>
+              <Typography
+                variant="caption"
+                noWrap
+                sx={{
+                  opacity: 0.7,
+                  fontFamily: 'ui-monospace, Menlo, monospace',
+                  letterSpacing: 1.5,
+                }}
+              >
+                {code}
+              </Typography>
+            </Stack>
             <Stack
               direction="row"
               alignItems="center"
