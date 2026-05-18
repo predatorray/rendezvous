@@ -72,94 +72,142 @@ export default function HomePage() {
       sx={{
         minHeight: '100%',
         display: 'flex',
-        flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        py: 6,
+        py: { xs: 4, md: 6 },
+        px: { xs: 2, md: 4 },
       }}
     >
-      <Container maxWidth="sm">
-        <Stack spacing={1} alignItems="center" sx={{ mb: 4 }}>
-          <Typography
-            variant="h3"
-            sx={{ fontWeight: 600, letterSpacing: -1 }}
-          >
-            Rendezvous
-          </Typography>
-          <Typography variant="body1" sx={{ opacity: 0.7 }}>
-            Serverless peer-to-peer video meetings.
-          </Typography>
-        </Stack>
-
-        <Paper elevation={0} sx={{ p: 4, borderRadius: 3 }}>
-          <Stack spacing={3}>
-            <TextField
-              label="Your name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              fullWidth
-              autoFocus
-              autoComplete="name"
-              inputProps={{ maxLength: 40 }}
-            />
-
-            <Button
-              variant="contained"
-              size="large"
-              startIcon={<VideocamIcon />}
-              disabled={!canHost}
-              onClick={handleHost}
-              sx={{ py: 1.5, textTransform: 'none', fontWeight: 500 }}
-            >
-              Host new meeting
-            </Button>
-
-            <Divider sx={{ opacity: 0.4 }}>or join</Divider>
-
-            <Stack direction="row" spacing={1.5}>
-              <TextField
-                label="Meeting code"
-                value={code}
-                onChange={(e) => setCode(e.target.value)}
-                placeholder="abcxyz"
-                fullWidth
-                inputProps={{
-                  maxLength: 12,
-                  style: { textTransform: 'lowercase' },
-                  autoCapitalize: 'none',
-                  autoCorrect: 'off',
-                  spellCheck: false,
-                }}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter' && canJoin) handleJoin();
-                }}
-              />
-              <Button
-                variant="outlined"
-                size="large"
-                startIcon={<LoginIcon />}
-                disabled={!canJoin}
-                onClick={handleJoin}
-                sx={{ textTransform: 'none', flexShrink: 0, px: 3 }}
-              >
-                Join
-              </Button>
-            </Stack>
-
-            {error && (
-              <Alert severity="error" variant="outlined">
-                {error}
-              </Alert>
-            )}
-          </Stack>
-        </Paper>
-
-        <Typography
-          variant="caption"
-          sx={{ display: 'block', textAlign: 'center', mt: 3, opacity: 0.5 }}
+      <Container maxWidth="lg">
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+            gap: { xs: 4, md: 8 },
+            alignItems: 'center',
+          }}
         >
-          Peer-to-peer via WebRTC. No accounts, no servers.
-        </Typography>
+          <Stack
+            spacing={2}
+            sx={{
+              textAlign: { xs: 'center', md: 'left' },
+              alignItems: { xs: 'center', md: 'flex-start' },
+            }}
+          >
+            <Typography
+              variant="h2"
+              sx={{
+                fontWeight: 700,
+                letterSpacing: -2,
+                fontSize: { xs: '2.75rem', md: '4rem' },
+                lineHeight: 1.05,
+                background:
+                  'linear-gradient(135deg, #7c4dff 0%, #00bcd4 50%, #ff4081 100%)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
+              Rendezvous
+            </Typography>
+            <Typography
+              variant="h5"
+              sx={{
+                fontWeight: 500,
+                opacity: 0.9,
+                fontStyle: 'italic',
+                letterSpacing: 0.5,
+              }}
+            >
+              Where conversations meet, serverlessly.
+            </Typography>
+            <Typography
+              variant="body1"
+              sx={{ opacity: 0.7, maxWidth: 460, lineHeight: 1.7 }}
+            >
+              Spin up a private video room in seconds. Pure peer-to-peer
+              WebRTC — no accounts, no servers, no middlemen. Just you, your
+              people, and a six-letter code.
+            </Typography>
+          </Stack>
+
+          <Box>
+            <Paper elevation={0} sx={{ p: { xs: 3, md: 4 }, borderRadius: 3 }}>
+              <Stack spacing={3}>
+                <TextField
+                  label="Your name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  fullWidth
+                  autoFocus
+                  autoComplete="name"
+                  inputProps={{ maxLength: 40 }}
+                />
+
+                <Button
+                  variant="contained"
+                  size="large"
+                  startIcon={<VideocamIcon />}
+                  disabled={!canHost}
+                  onClick={handleHost}
+                  sx={{ py: 1.5, textTransform: 'none', fontWeight: 500 }}
+                >
+                  Host new meeting
+                </Button>
+
+                <Divider sx={{ opacity: 0.4 }}>or join</Divider>
+
+                <Stack direction="row" spacing={1.5}>
+                  <TextField
+                    label="Meeting code"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    placeholder="abcxyz"
+                    fullWidth
+                    inputProps={{
+                      maxLength: 12,
+                      style: { textTransform: 'lowercase' },
+                      autoCapitalize: 'none',
+                      autoCorrect: 'off',
+                      spellCheck: false,
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && canJoin) handleJoin();
+                    }}
+                  />
+                  <Button
+                    variant="outlined"
+                    size="large"
+                    startIcon={<LoginIcon />}
+                    disabled={!canJoin}
+                    onClick={handleJoin}
+                    sx={{ textTransform: 'none', flexShrink: 0, px: 3 }}
+                  >
+                    Join
+                  </Button>
+                </Stack>
+
+                {error && (
+                  <Alert severity="error" variant="outlined">
+                    {error}
+                  </Alert>
+                )}
+              </Stack>
+            </Paper>
+
+            <Typography
+              variant="caption"
+              sx={{
+                display: 'block',
+                textAlign: 'center',
+                mt: 2,
+                opacity: 0.5,
+              }}
+            >
+              Peer-to-peer via WebRTC. No accounts, no servers.
+            </Typography>
+          </Box>
+        </Box>
       </Container>
     </Box>
   );
