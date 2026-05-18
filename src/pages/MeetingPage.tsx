@@ -3,6 +3,11 @@ import {
   Box,
   Button,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogContentText,
+  DialogTitle,
   IconButton,
   Stack,
   Typography,
@@ -120,7 +125,14 @@ function LiveMeeting({
 
   const [chatOpen, setChatOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [leaveOpen, setLeaveOpen] = useState(false);
   const [unread, setUnread] = useState(0);
+
+  const confirmLeave = () => {
+    setLeaveOpen(false);
+    meeting.leave();
+    navigate('/');
+  };
 
   // Auto-open share dialog the first time the host enters a fresh meeting.
   const sharedOnceRef = useRef(false);
@@ -315,7 +327,7 @@ function LiveMeeting({
             onToggleVideo={meeting.toggleVideo}
             onToggleChat={() => setChatOpen((v) => !v)}
             onShare={() => setShareOpen(true)}
-            onLeave={meeting.leave}
+            onLeave={() => setLeaveOpen(true)}
             unreadCount={unread}
             isSpeaking={isSpeaking}
           />
@@ -337,6 +349,25 @@ function LiveMeeting({
         onClose={() => setShareOpen(false)}
         code={code}
       />
+
+      <Dialog open={leaveOpen} onClose={() => setLeaveOpen(false)}>
+        <DialogTitle>
+          {isHost ? 'End meeting for everyone?' : 'Leave meeting?'}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            {isHost
+              ? 'You are the host. Ending the meeting will disconnect everyone.'
+              : 'You will be disconnected from this meeting.'}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setLeaveOpen(false)}>Cancel</Button>
+          <Button onClick={confirmLeave} color="error" variant="contained" autoFocus>
+            {isHost ? 'End meeting' : 'Leave'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
