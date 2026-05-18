@@ -1,7 +1,7 @@
 const zh = {
   lang: '中文',
 
-  home_tagline: '对话相聚之处，无需服务器。',
+  home_tagline: '海内存知己，天涯若比邻。',
   home_description:
     '几秒钟内创建私密视频房间。纯点对点 WebRTC —— 无需账号、无需服务器、无中间人。只需你、你的伙伴，以及一个六字母的代码。',
   home_your_name: '你的名字',

@@ -1,9 +1,9 @@
 const fr = {
   lang: 'Français',
 
-  home_tagline: 'Là où les conversations se rencontrent, sans serveur.',
+  home_tagline: 'Rendez-vous, sans serveur.',
   home_description:
-    'Créez une salle vidéo privée en quelques secondes. Pur pair-à-pair WebRTC — pas de comptes, pas de serveurs, pas d’intermédiaires. Juste vous, vos proches et un code à six lettres.',
+    'Créez une salle vidéo privée en quelques secondes. WebRTC pair-à-pair pur — pas de comptes, pas de serveurs, pas d’intermédiaires. Juste vous, vos proches et un code à six lettres.',
   home_your_name: 'Votre nom',
   home_host: 'Lancer une réunion',
   home_or_join: 'ou rejoindre',
@@ -59,7 +59,7 @@ const fr = {
   chat_empty: 'Pas encore de messages.',
   chat_you: 'Vous',
   chat_system_joined: (name: string) => `${name} a rejoint`,
-  chat_system_left: (name: string) => `${name} est parti`,
+  chat_system_left: (name: string) => `${name} a quitté la réunion`,
 
   controls_mute: 'Couper le micro',
   controls_unmute: 'Activer le micro',
