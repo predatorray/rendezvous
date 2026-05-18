@@ -9,6 +9,7 @@ import {
   Typography,
   Paper,
   Alert,
+  Link,
 } from '@mui/material';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import LoginIcon from '@mui/icons-material/Login';
@@ -73,8 +74,7 @@ export default function HomePage() {
       sx={{
         minHeight: '100%',
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
+        flexDirection: 'column',
         py: { xs: 4, md: 6 },
         px: { xs: 2, md: 4 },
         position: 'relative',
@@ -83,7 +83,10 @@ export default function HomePage() {
       <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
         <ThemeToggle size="medium" />
       </Box>
-      <Container maxWidth="lg">
+      <Container
+        maxWidth="lg"
+        sx={{ flex: 1, display: 'flex', alignItems: 'center' }}
+      >
         <Box
           sx={{
             display: 'grid',
@@ -214,6 +217,38 @@ export default function HomePage() {
           </Box>
         </Box>
       </Container>
+      <Box
+        component="footer"
+        sx={{
+          mt: { xs: 4, md: 6 },
+          display: 'flex',
+          justifyContent: 'center',
+          gap: 3,
+          flexWrap: 'wrap',
+        }}
+      >
+        {[
+          { label: 'Author', href: 'https://www.predatorray.me' },
+          { label: 'GitHub', href: 'https://github.com/predatorray/rendezvous' },
+          {
+            label: 'Feedback',
+            href: 'https://github.com/predatorray/rendezvous/issues',
+          },
+        ].map((link) => (
+          <Link
+            key={link.href}
+            href={link.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            underline="hover"
+            variant="caption"
+            color="inherit"
+            sx={{ opacity: 0.5, '&:hover': { opacity: 0.9 } }}
+          >
+            {link.label}
+          </Link>
+        ))}
+      </Box>
     </Box>
   );
 }
