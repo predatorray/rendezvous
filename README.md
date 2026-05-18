@@ -1,7 +1,17 @@
-# Rendezvous
+# Rendezvous - where conversations meet, serverlessly
+
+[![License](https://img.shields.io/github/license/predatorray/rendezvous)][1]
+[![Build Status](https://img.shields.io/github/actions/workflow/status/predatorray/rendezvous/ci.yml?branch=main)][2]
 
 A serverless, Zoom-like video conferencing web app. Built with React,
 TypeScript, MUI, and [PeerJS](https://peerjs.com) on top of WebRTC.
+
+👉 **Try it online: <https://predatorray.github.io/rendezvous/>**
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/predatorray/rendezvous/assets/screenshot-homepage.png" width="45%" />
+  <img src="https://raw.githubusercontent.com/predatorray/rendezvous/assets/screenshot-meeting.png" width="45%" />
+</p>
 
 There is no application server — the **host** of each meeting acts as a
 relay hub for chat messages and media streams, so each participant only
@@ -117,3 +127,6 @@ classic O(N²) mesh.
   limited to what `getUserMedia` and the browser’s WebRTC stack negotiate.
 - Default PeerJS broker is used; for production you can host your own
   PeerServer and pass it to the `Peer` constructor.
+
+[1]: https://github.com/predatorray/rendezvous/blob/main/LICENSE
+[2]: https://github.com/predatorray/rendezvous/actions/workflows/ci.yml
