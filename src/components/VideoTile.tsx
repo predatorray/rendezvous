@@ -8,6 +8,7 @@ interface Props {
   member: Member;
   stream: MediaStream | null;
   isSelf: boolean;
+  compact?: boolean;
 }
 
 function initialsOf(name: string): string {
@@ -27,7 +28,7 @@ function colorOf(name: string): string {
   return `hsl(${hue}, 40%, 35%)`;
 }
 
-export default function VideoTile({ member, stream, isSelf }: Props) {
+export default function VideoTile({ member, stream, isSelf, compact }: Props) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -49,9 +50,9 @@ export default function VideoTile({ member, stream, isSelf }: Props) {
         width: '100%',
         height: '100%',
         bgcolor: '#0d0d0d',
-        borderRadius: 2,
+        borderRadius: compact ? 0 : 2,
         overflow: 'hidden',
-        boxShadow: '0 0 0 1px rgba(255,255,255,0.06)',
+        boxShadow: compact ? 'none' : '0 0 0 1px rgba(255,255,255,0.06)',
       }}
     >
       {showVideo ? (
@@ -80,10 +81,16 @@ export default function VideoTile({ member, stream, isSelf }: Props) {
         >
           <Avatar
             sx={{
-              width: { xs: 56, sm: 80 },
-              height: { xs: 56, sm: 80 },
+              width: compact
+                ? { xs: 32, sm: 40 }
+                : { xs: 56, sm: 72, md: 80 },
+              height: compact
+                ? { xs: 32, sm: 40 }
+                : { xs: 56, sm: 72, md: 80 },
               bgcolor: 'rgba(255,255,255,0.12)',
-              fontSize: { xs: 22, sm: 32 },
+              fontSize: compact
+                ? { xs: 14, sm: 16 }
+                : { xs: 20, sm: 28, md: 32 },
               fontWeight: 500,
             }}
           >
@@ -92,37 +99,51 @@ export default function VideoTile({ member, stream, isSelf }: Props) {
         </Box>
       )}
 
-      <Stack
-        direction="row"
-        spacing={0.5}
-        alignItems="center"
-        sx={{
-          position: 'absolute',
-          left: 8,
-          bottom: 8,
-          px: 1,
-          py: 0.25,
-          bgcolor: 'rgba(0,0,0,0.55)',
-          borderRadius: 1,
-        }}
-      >
-        {member.isHost && (
-          <StarIcon sx={{ fontSize: 14, color: '#FFD24C' }} titleAccess="Host" />
-        )}
-        <Typography variant="caption" sx={{ color: '#fff', fontWeight: 500 }}>
-          {member.name}
-          {isSelf ? ' (you)' : ''}
-        </Typography>
-      </Stack>
+      {!compact && (
+        <Stack
+          direction="row"
+          spacing={0.5}
+          alignItems="center"
+          sx={{
+            position: 'absolute',
+            left: { xs: 4, sm: 8 },
+            bottom: { xs: 4, sm: 8 },
+            maxWidth: 'calc(100% - 16px)',
+            px: { xs: 0.75, sm: 1 },
+            py: 0.25,
+            bgcolor: 'rgba(0,0,0,0.55)',
+            borderRadius: 1,
+          }}
+        >
+          {member.isHost && (
+            <StarIcon
+              sx={{ fontSize: { xs: 12, sm: 14 }, color: '#FFD24C' }}
+              titleAccess="Host"
+            />
+          )}
+          <Typography
+            variant="caption"
+            noWrap
+            sx={{
+              color: '#fff',
+              fontWeight: 500,
+              fontSize: { xs: 11, sm: 12 },
+            }}
+          >
+            {member.name}
+            {isSelf ? ' (you)' : ''}
+          </Typography>
+        </Stack>
+      )}
 
       {!member.audio && (
         <Box
           sx={{
             position: 'absolute',
-            right: 8,
-            bottom: 8,
-            width: 28,
-            height: 28,
+            right: compact ? 4 : { xs: 4, sm: 8 },
+            bottom: compact ? 4 : { xs: 4, sm: 8 },
+            width: compact ? 18 : { xs: 22, sm: 28 },
+            height: compact ? 18 : { xs: 22, sm: 28 },
             borderRadius: '50%',
             bgcolor: 'rgba(220,38,38,0.85)',
             display: 'flex',
@@ -130,7 +151,9 @@ export default function VideoTile({ member, stream, isSelf }: Props) {
             justifyContent: 'center',
           }}
         >
-          <MicOffIcon sx={{ fontSize: 16, color: '#fff' }} />
+          <MicOffIcon
+            sx={{ fontSize: compact ? 12 : { xs: 13, sm: 16 }, color: '#fff' }}
+          />
         </Box>
       )}
     </Box>

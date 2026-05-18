@@ -1,4 +1,4 @@
-import { Box, IconButton, Stack, Tooltip } from '@mui/material';
+import { Box, IconButton, Stack, Tooltip, useTheme } from '@mui/material';
 import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
 import VideocamIcon from '@mui/icons-material/Videocam';
@@ -31,25 +31,29 @@ function PillButton({
   children: React.ReactNode;
   danger?: boolean;
 }) {
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const neutralBg = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)';
+  const neutralHover = isDark ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)';
   return (
     <Tooltip title={label} arrow>
       <IconButton
         onClick={onClick}
         aria-label={label}
         sx={{
-          width: 48,
-          height: 48,
+          width: { xs: 40, sm: 48 },
+          height: { xs: 40, sm: 48 },
           bgcolor: danger
             ? '#dc2626'
             : active
-            ? 'rgba(255,255,255,0.08)'
+            ? neutralBg
             : 'rgba(220,38,38,0.85)',
-          color: '#fff',
+          color: danger || !active ? '#fff' : 'text.primary',
           '&:hover': {
             bgcolor: danger
               ? '#b91c1c'
               : active
-              ? 'rgba(255,255,255,0.15)'
+              ? neutralHover
               : 'rgba(220,38,38,1)',
           },
         }}
@@ -73,15 +77,20 @@ export default function Controls({
   return (
     <Box
       sx={{
-        py: 1.5,
-        px: 2,
-        bgcolor: '#111',
-        borderTop: '1px solid rgba(255,255,255,0.06)',
+        py: { xs: 1, sm: 1.5 },
+        px: { xs: 1, sm: 2 },
+        bgcolor: 'background.paper',
+        borderTop: '1px solid',
+        borderColor: 'divider',
         display: 'flex',
         justifyContent: 'center',
       }}
     >
-      <Stack direction="row" spacing={1.5} alignItems="center">
+      <Stack
+        direction="row"
+        spacing={{ xs: 0.75, sm: 1.5 }}
+        alignItems="center"
+      >
         <PillButton
           label={audioEnabled ? 'Mute' : 'Unmute'}
           active={audioEnabled}
@@ -126,7 +135,7 @@ export default function Controls({
         <PillButton label="Share invite" active={true} onClick={onShare}>
           <IosShareIcon />
         </PillButton>
-        <Box sx={{ width: 12 }} />
+        <Box sx={{ width: { xs: 4, sm: 12 } }} />
         <PillButton label="Leave" active={true} onClick={onLeave} danger>
           <CallEndIcon />
         </PillButton>

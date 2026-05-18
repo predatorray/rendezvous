@@ -19,6 +19,7 @@ interface Props {
   onSend: (text: string) => void;
   selfId: string;
   width?: number;
+  variant?: 'persistent' | 'temporary';
 }
 
 function formatTime(ts: number): string {
@@ -35,6 +36,7 @@ export default function ChatDrawer({
   onSend,
   selfId,
   width = 340,
+  variant = 'persistent',
 }: Props) {
   const [draft, setDraft] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -64,13 +66,15 @@ export default function ChatDrawer({
       anchor="right"
       open={open}
       onClose={onClose}
-      variant="persistent"
+      variant={variant}
       slotProps={{
         paper: {
           sx: {
             width,
+            maxWidth: '100vw',
             bgcolor: 'background.paper',
-            borderLeft: '1px solid rgba(255,255,255,0.08)',
+            borderLeft: '1px solid',
+            borderColor: 'divider',
           },
         },
       }}

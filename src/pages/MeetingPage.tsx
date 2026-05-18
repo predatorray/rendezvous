@@ -6,6 +6,8 @@ import {
   IconButton,
   Stack,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import IosShareIcon from '@mui/icons-material/IosShare';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
@@ -13,6 +15,7 @@ import VideoGrid from '../components/VideoGrid';
 import ChatDrawer from '../components/ChatDrawer';
 import Controls from '../components/Controls';
 import ShareDialog from '../components/ShareDialog';
+import ThemeToggle from '../components/ThemeToggle';
 import { useMeeting } from '../peer/useMeeting';
 import { isValidMeetingCode } from '../util/code';
 import { getStoredName, setStoredName } from '../util/storage';
@@ -67,7 +70,8 @@ export default function MeetingPage() {
               p: 1.5,
               fontSize: 16,
               borderRadius: 1,
-              border: '1px solid rgba(255,255,255,0.2)',
+              border: '1px solid',
+              borderColor: 'divider',
               bgcolor: 'transparent',
               color: 'inherit',
               outline: 'none',
@@ -109,6 +113,8 @@ function LiveMeeting({
 }) {
   const navigate = useNavigate();
   const meeting = useMeeting({ code, name, isHost });
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const [chatOpen, setChatOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
@@ -204,7 +210,9 @@ function LiveMeeting({
     );
   }
 
-  const drawerWidth = 340;
+  const drawerWidth = isMobile ? Math.min(window.innerWidth, 360) : 340;
+  // On mobile, overlay the drawer instead of squeezing the video grid.
+  const pushContent = chatOpen && !isMobile;
 
   return (
     <Box
@@ -230,7 +238,7 @@ function LiveMeeting({
             display: 'flex',
             flexDirection: 'column',
             transition: 'margin-right .2s',
-            mr: chatOpen ? `${drawerWidth}px` : 0,
+            mr: pushContent ? `${drawerWidth}px` : 0,
           }}
         >
           <Stack
@@ -238,17 +246,27 @@ function LiveMeeting({
             alignItems="center"
             spacing={1}
             sx={{
-              px: 2,
-              py: 1,
-              bgcolor: '#111',
-              borderBottom: '1px solid rgba(255,255,255,0.06)',
+              px: { xs: 1, sm: 2 },
+              py: { xs: 0.75, sm: 1 },
+              bgcolor: 'background.paper',
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+              minHeight: 44,
             }}
           >
-            <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+            <Typography
+              variant="subtitle2"
+              noWrap
+              sx={{
+                fontWeight: 600,
+                display: { xs: 'none', sm: 'inline' },
+              }}
+            >
               Rendezvous
             </Typography>
             <Typography
               variant="caption"
+              noWrap
               sx={{
                 opacity: 0.7,
                 fontFamily: 'ui-monospace, Menlo, monospace',
@@ -257,18 +275,29 @@ function LiveMeeting({
             >
               {code}
             </Typography>
-            <IconButton
-              size="small"
-              onClick={() => setShareOpen(true)}
-              aria-label="Share invite"
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={1}
               sx={{ ml: 'auto' }}
             >
-              <IosShareIcon fontSize="small" />
-            </IconButton>
-            <Typography variant="caption" sx={{ opacity: 0.6 }}>
-              {meeting.members.length}{' '}
-              {meeting.members.length === 1 ? 'person' : 'people'}
-            </Typography>
+              <ThemeToggle />
+              <IconButton
+                size="small"
+                onClick={() => setShareOpen(true)}
+                aria-label="Share invite"
+              >
+                <IosShareIcon fontSize="small" />
+              </IconButton>
+              <Typography
+                variant="caption"
+                noWrap
+                sx={{ opacity: 0.6 }}
+              >
+                {meeting.members.length}{' '}
+                {meeting.members.length === 1 ? 'person' : 'people'}
+              </Typography>
+            </Stack>
           </Stack>
           <VideoGrid
             members={sortedMembers}
@@ -295,6 +324,7 @@ function LiveMeeting({
           onSend={meeting.sendChat}
           selfId={meeting.selfId}
           width={drawerWidth}
+          variant={isMobile ? 'temporary' : 'persistent'}
         />
       </Box>
 

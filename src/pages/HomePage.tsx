@@ -13,6 +13,7 @@ import {
 import VideocamIcon from '@mui/icons-material/Videocam';
 import LoginIcon from '@mui/icons-material/Login';
 import { useNavigate } from 'react-router-dom';
+import ThemeToggle from '../components/ThemeToggle';
 import {
   generateMeetingCode,
   isValidMeetingCode,
@@ -76,8 +77,12 @@ export default function HomePage() {
         justifyContent: 'center',
         py: { xs: 4, md: 6 },
         px: { xs: 2, md: 4 },
+        position: 'relative',
       }}
     >
+      <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
+        <ThemeToggle size="medium" />
+      </Box>
       <Container maxWidth="lg">
         <Box
           sx={{
