@@ -1,0 +1,138 @@
+import { useEffect, useRef } from 'react';
+import { Avatar, Box, Stack, Typography } from '@mui/material';
+import MicOffIcon from '@mui/icons-material/MicOff';
+import StarIcon from '@mui/icons-material/Star';
+import { Member } from '../types';
+
+interface Props {
+  member: Member;
+  stream: MediaStream | null;
+  isSelf: boolean;
+}
+
+function initialsOf(name: string): string {
+  const parts = name.trim().split(/\s+/);
+  if (parts.length === 0) return '?';
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+// Stable pastel-ish color from name.
+function colorOf(name: string): string {
+  let hash = 0;
+  for (let i = 0; i < name.length; i++) {
+    hash = (hash * 31 + name.charCodeAt(i)) >>> 0;
+  }
+  const hue = hash % 360;
+  return `hsl(${hue}, 40%, 35%)`;
+}
+
+export default function VideoTile({ member, stream, isSelf }: Props) {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    if (stream && member.video) {
+      if (el.srcObject !== stream) el.srcObject = stream;
+    } else {
+      el.srcObject = null;
+    }
+  }, [stream, member.video]);
+
+  const showVideo = member.video && !!stream;
+
+  return (
+    <Box
+      sx={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        bgcolor: '#0d0d0d',
+        borderRadius: 2,
+        overflow: 'hidden',
+        boxShadow: '0 0 0 1px rgba(255,255,255,0.06)',
+      }}
+    >
+      {showVideo ? (
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted={isSelf}
+          style={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            transform: isSelf ? 'scaleX(-1)' : undefined,
+          }}
+        />
+      ) : (
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            bgcolor: colorOf(member.name),
+          }}
+        >
+          <Avatar
+            sx={{
+              width: { xs: 56, sm: 80 },
+              height: { xs: 56, sm: 80 },
+              bgcolor: 'rgba(255,255,255,0.12)',
+              fontSize: { xs: 22, sm: 32 },
+              fontWeight: 500,
+            }}
+          >
+            {initialsOf(member.name)}
+          </Avatar>
+        </Box>
+      )}
+
+      <Stack
+        direction="row"
+        spacing={0.5}
+        alignItems="center"
+        sx={{
+          position: 'absolute',
+          left: 8,
+          bottom: 8,
+          px: 1,
+          py: 0.25,
+          bgcolor: 'rgba(0,0,0,0.55)',
+          borderRadius: 1,
+        }}
+      >
+        {member.isHost && (
+          <StarIcon sx={{ fontSize: 14, color: '#FFD24C' }} titleAccess="Host" />
+        )}
+        <Typography variant="caption" sx={{ color: '#fff', fontWeight: 500 }}>
+          {member.name}
+          {isSelf ? ' (you)' : ''}
+        </Typography>
+      </Stack>
+
+      {!member.audio && (
+        <Box
+          sx={{
+            position: 'absolute',
+            right: 8,
+            bottom: 8,
+            width: 28,
+            height: 28,
+            borderRadius: '50%',
+            bgcolor: 'rgba(220,38,38,0.85)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <MicOffIcon sx={{ fontSize: 16, color: '#fff' }} />
+        </Box>
+      )}
+    </Box>
+  );
+}

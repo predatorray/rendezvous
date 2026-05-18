@@ -1,46 +1,119 @@
-# Getting Started with Create React App
+# Rendezvous
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+A serverless, Zoom-like video conferencing web app. Built with React,
+TypeScript, MUI, and [PeerJS](https://peerjs.com) on top of WebRTC.
 
-## Available Scripts
+There is no application server — the **host** of each meeting acts as a
+relay hub for chat messages and media streams, so each participant only
+maintains connections to the host instead of every other participant. The
+PeerJS public broker is used only for the initial WebRTC signaling.
 
-In the project directory, you can run:
+## Features
 
-### `npm start`
+- Pick a name, host a meeting, or join an existing one by code or link
+- 6-letter human-readable meeting codes (~300M combinations)
+- Tile-based video grid with auto-layout
+- Tile shows the participant’s initials when their camera is off
+- Mute / unmute audio, start / stop video (mute icon shown on the tile)
+- Collapsible right-side chat drawer with timestamps and join/leave notices
+- Chat history is preserved by the host so late joiners see prior messages
+- Sharable invite link and copy-able meeting code
+- Host leaving ends the meeting for everyone
+- No accounts, no passcodes, fully static-site deployable
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+## Tech stack
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+- React 19 + TypeScript (Create React App)
+- MUI v7 (dark, minimalist Zoom-inspired theme)
+- React Router v7 (`HashRouter` for static hosting)
+- PeerJS for signaling and WebRTC orchestration
+- `gh-pages` for GitHub Pages deployment
 
-### `npm test`
+## Running locally
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```bash
+npm install
+npm start
+```
 
-### `npm run build`
+Open <http://localhost:3000>. To test multi-party meetings open additional
+incognito windows and use the same meeting code.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+## Building
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+```bash
+npm run build
+```
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+Outputs a static bundle in `build/` ready to be served from any CDN. The
+app uses `HashRouter`, so it works on hosts that don’t support
+client-side SPA rewrites (e.g. GitHub Pages).
 
-### `npm run eject`
+## Deploying to GitHub Pages
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+1. Add a `homepage` field to `package.json` pointing at your Pages URL:
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+   ```json
+   "homepage": "https://YOUR_USER.github.io/rendezvous"
+   ```
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+2. Push to GitHub, then run:
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+   ```bash
+   npm run deploy
+   ```
 
-## Learn More
+   This builds and pushes the `build/` directory to the `gh-pages` branch
+   using `gh-pages`. Enable Pages from the `gh-pages` branch in repo
+   Settings → Pages.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+## Architecture
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+- `src/peer/MeetingClient.ts` — owns the PeerJS `Peer` and implements
+  both host (relay) and client behaviors.
+- `src/peer/useMeeting.ts` — React hook that adapts the meeting client
+  to component state.
+- `src/types.ts` — shared types and the wire protocol carried over
+  PeerJS `DataConnection`s.
+- `src/pages/` — Home and Meeting pages.
+- `src/components/` — `VideoGrid`, `VideoTile`, `ChatDrawer`,
+  `Controls`, `ShareDialog`.
+
+### Wire protocol
+
+Messages exchanged over the data connection between a client and the
+host:
+
+| Type | Direction | Purpose |
+| ---- | --------- | ------- |
+| `hello` | client → host | Sent on connect with the participant’s name |
+| `welcome` | host → client | Returns assigned id, roster, and timeline |
+| `roster` | host → all | Updated member list (joins, leaves, state) |
+| `chat-send` | client → host | New chat message draft |
+| `timeline` | host → all | Authoritative chat or system event |
+| `state` | client → host | Participant changed audio/video |
+| `end` | host → all | Host is leaving — meeting is over |
+
+### Media topology
+
+Each participant places exactly one outbound media call to the host
+carrying their own stream. The host accepts and:
+
+1. Calls every other connected client with that incoming stream,
+   tagged with `metadata.peerId` so the receiver knows which participant
+   it represents.
+2. Pushes its own stream and every existing remote stream to a new
+   client when they join.
+
+This gives every client a constant number of signalling sessions with
+the host (one data connection + N media connections), avoiding the
+classic O(N²) mesh.
+
+## Limitations / caveats
+
+- The host’s upstream bandwidth bounds meeting size (relay is on a
+  consumer-grade browser tab).
+- Forwarding remote tracks through the host re-encodes them; quality is
+  limited to what `getUserMedia` and the browser’s WebRTC stack negotiate.
+- Default PeerJS broker is used; for production you can host your own
+  PeerServer and pass it to the `Peer` constructor.

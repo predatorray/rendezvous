@@ -1,19 +1,35 @@
-import React from 'react';
 import ReactDOM from 'react-dom/client';
+import { CssBaseline, ThemeProvider, createTheme } from '@mui/material';
+import { HashRouter } from 'react-router-dom';
 import './index.css';
 import App from './App';
-import reportWebVitals from './reportWebVitals';
+
+const theme = createTheme({
+  palette: {
+    mode: 'dark',
+    primary: { main: '#2D8CFF' }, // Zoom blue
+    background: {
+      default: '#1a1a1a',
+      paper: '#242424',
+    },
+  },
+  shape: { borderRadius: 8 },
+  typography: {
+    fontFamily:
+      '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+  },
+});
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
+// StrictMode double-invokes effects in development which would tear down and
+// re-init the PeerJS peer mid-handshake, so it is intentionally omitted here.
 root.render(
-  <React.StrictMode>
-    <App />
-  </React.StrictMode>
+  <ThemeProvider theme={theme}>
+    <CssBaseline />
+    <HashRouter>
+      <App />
+    </HashRouter>
+  </ThemeProvider>
 );
-
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
-reportWebVitals();
