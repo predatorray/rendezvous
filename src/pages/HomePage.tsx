@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Box,
   Button,
@@ -32,15 +32,24 @@ export default function HomePage() {
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [nameTouched, setNameTouched] = useState(false);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setName(getStoredName());
   }, []);
 
   const trimmedName = name.trim();
-  const canHost = trimmedName.length > 0;
+  const hasName = trimmedName.length > 0;
   const normalizedCode = useMemo(() => normalizeMeetingCode(code), [code]);
-  const canJoin = canHost && isValidMeetingCode(normalizedCode);
+  const isCodeValid = isValidMeetingCode(normalizedCode);
+  const codeStarted = code.length > 0;
+  const showNameHint = !hasName && (nameTouched || codeStarted);
+
+  const focusName = () => {
+    setNameTouched(true);
+    nameInputRef.current?.focus();
+  };
 
   const proceed = (mode: Mode, meetingCode: string) => {
     setStoredName(trimmedName);
@@ -52,8 +61,9 @@ export default function HomePage() {
 
   const handleHost = () => {
     setError(null);
-    if (!canHost) {
+    if (!hasName) {
       setError(t.home_error_name);
+      focusName();
       return;
     }
     proceed('host', generateMeetingCode());
@@ -61,11 +71,12 @@ export default function HomePage() {
 
   const handleJoin = () => {
     setError(null);
-    if (!canHost) {
+    if (!hasName) {
       setError(t.home_error_name);
+      focusName();
       return;
     }
-    if (!isValidMeetingCode(normalizedCode)) {
+    if (!isCodeValid) {
       setError(t.home_error_code);
       return;
     }
@@ -161,9 +172,14 @@ export default function HomePage() {
                   label={t.home_your_name}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
+                  onBlur={() => setNameTouched(true)}
                   fullWidth
+                  required
                   autoFocus
                   autoComplete="name"
+                  inputRef={nameInputRef}
+                  error={showNameHint}
+                  helperText={showNameHint ? t.home_name_required_hint : ' '}
                   inputProps={{ maxLength: 40 }}
                 />
 
@@ -171,7 +187,6 @@ export default function HomePage() {
                   variant="contained"
                   size="large"
                   startIcon={<VideocamIcon />}
-                  disabled={!canHost}
                   onClick={handleHost}
                   sx={{ py: 1.5, textTransform: 'none', fontWeight: 500 }}
                 >
@@ -195,14 +210,14 @@ export default function HomePage() {
                       spellCheck: false,
                     }}
                     onKeyDown={(e) => {
-                      if (e.key === 'Enter' && canJoin) handleJoin();
+                      if (e.key === 'Enter' && isCodeValid) handleJoin();
                     }}
                   />
                   <Button
                     variant="outlined"
                     size="large"
                     startIcon={<LoginIcon />}
-                    disabled={!canJoin}
+                    disabled={!isCodeValid}
                     onClick={handleJoin}
                     sx={{ textTransform: 'none', flexShrink: 0, px: 3 }}
                   >

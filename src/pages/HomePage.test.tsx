@@ -23,15 +23,35 @@ function renderHome() {
 describe('HomePage', () => {
   beforeEach(() => localStorage.clear());
 
-  it('disables host and join buttons without a name', () => {
+  it('keeps the Join button disabled until a valid code is entered', () => {
     renderHome();
-    expect(screen.getByRole('button', { name: en.home_host })).toBeDisabled();
     expect(screen.getByRole('button', { name: en.home_join })).toBeDisabled();
+  });
+
+  it('shows an inline name error and focuses the name field when hosting without a name', () => {
+    renderHome();
+    userEvent.click(screen.getByRole('button', { name: en.home_host }));
+    expect(screen.getByText(en.home_error_name)).toBeInTheDocument();
+    expect(screen.getByLabelText(en.home_your_name, { exact: false })).toHaveFocus();
+  });
+
+  it('shows the required hint on the name field once the user starts typing a code', () => {
+    renderHome();
+    userEvent.type(screen.getByLabelText(en.home_meeting_code), 'a');
+    expect(screen.getByText(en.home_name_required_hint)).toBeInTheDocument();
+  });
+
+  it('surfaces the name error when joining with a valid code but no name', () => {
+    renderHome();
+    userEvent.type(screen.getByLabelText(en.home_meeting_code), 'abcdef');
+    userEvent.click(screen.getByRole('button', { name: en.home_join }));
+    expect(screen.getByText(en.home_error_name)).toBeInTheDocument();
+    expect(screen.getByLabelText(en.home_your_name, { exact: false })).toHaveFocus();
   });
 
   it('navigates to a host route after entering a name and clicking Host', async () => {
     renderHome();
-    userEvent.type(screen.getByLabelText(en.home_your_name), 'Alice');
+    userEvent.type(screen.getByLabelText(en.home_your_name, { exact: false }), 'Alice');
     userEvent.click(screen.getByRole('button', { name: en.home_host }));
     const loc = await screen.findByTestId('location');
     expect(loc.textContent).toMatch(/^\/m\/[a-z]{6}\?.*host=1/);
@@ -41,14 +61,14 @@ describe('HomePage', () => {
 
   it('keeps the Join button disabled until the code is 6 letters', () => {
     renderHome();
-    userEvent.type(screen.getByLabelText(en.home_your_name), 'Alice');
+    userEvent.type(screen.getByLabelText(en.home_your_name, { exact: false }), 'Alice');
     userEvent.type(screen.getByLabelText(en.home_meeting_code), 'short');
     expect(screen.getByRole('button', { name: en.home_join })).toBeDisabled();
   });
 
   it('joins via a valid 6-letter code', async () => {
     renderHome();
-    userEvent.type(screen.getByLabelText(en.home_your_name), 'Alice');
+    userEvent.type(screen.getByLabelText(en.home_your_name, { exact: false }), 'Alice');
     userEvent.type(screen.getByLabelText(en.home_meeting_code), 'abcdef');
     userEvent.click(screen.getByRole('button', { name: en.home_join }));
     const loc = await screen.findByTestId('location');
@@ -61,7 +81,7 @@ describe('HomePage', () => {
     renderHome();
     await waitFor(() =>
       expect(
-        (screen.getByLabelText(en.home_your_name) as HTMLInputElement).value
+        (screen.getByLabelText(en.home_your_name, { exact: false }) as HTMLInputElement).value
       ).toBe('Bob')
     );
   });

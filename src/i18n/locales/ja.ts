@@ -10,6 +10,7 @@ const ja = {
   home_meeting_code: 'ミーティングコード',
   home_meeting_code_placeholder: 'ABCXYZ',
   home_join: '参加',
+  home_name_required_hint: '主催または参加するには名前を入力してください。',
   home_error_name: 'お名前を入力してください。',
   home_error_code: 'ミーティングコードは6文字である必要があります。',
   home_footnote: 'WebRTC によるピアツーピア。アカウントもサーバーも不要。',

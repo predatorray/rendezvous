@@ -10,6 +10,7 @@ const es = {
   home_meeting_code: 'Código de reunión',
   home_meeting_code_placeholder: 'ABCXYZ',
   home_join: 'Unirse',
+  home_name_required_hint: 'Introduce tu nombre para crear o unirte.',
   home_error_name: 'Por favor, introduce tu nombre.',
   home_error_code: 'El código de reunión debe tener 6 letras.',
   home_footnote: 'Entre pares mediante WebRTC. Sin cuentas, sin servidores.',

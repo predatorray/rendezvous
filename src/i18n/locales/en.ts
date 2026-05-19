@@ -10,6 +10,7 @@ const en = {
   home_meeting_code: 'Meeting code',
   home_meeting_code_placeholder: 'ABCXYZ',
   home_join: 'Join',
+  home_name_required_hint: 'Enter your name to host or join.',
   home_error_name: 'Please enter your name.',
   home_error_code: 'Meeting code must be 6 letters.',
   home_footnote: 'Peer-to-peer via WebRTC. No accounts, no servers.',

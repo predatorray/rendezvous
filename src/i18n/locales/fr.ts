@@ -10,6 +10,7 @@ const fr = {
   home_meeting_code: 'Code de la réunion',
   home_meeting_code_placeholder: 'ABCXYZ',
   home_join: 'Rejoindre',
+  home_name_required_hint: 'Entrez votre nom pour créer ou rejoindre.',
   home_error_name: 'Veuillez entrer votre nom.',
   home_error_code: 'Le code de la réunion doit comporter 6 lettres.',
   home_footnote: 'Pair-à-pair via WebRTC. Pas de comptes, pas de serveurs.',

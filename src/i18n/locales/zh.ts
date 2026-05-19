@@ -10,6 +10,7 @@ const zh = {
   home_meeting_code: '会议代码',
   home_meeting_code_placeholder: 'ABCXYZ',
   home_join: '加入',
+  home_name_required_hint: '请输入你的名字以创建或加入会议。',
   home_error_name: '请输入你的名字。',
   home_error_code: '会议代码必须是 6 个字母。',
   home_footnote: '基于 WebRTC 的点对点连接。无账号，无服务器。',
