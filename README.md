@@ -1,17 +1,23 @@
-# Rendezvous - where conversations meet, serverlessly
+<div align="center">
+    <a href="https://predatorray.github.io/rendezvous/" target="_blank"><img src="https://raw.githubusercontent.com/predatorray/rendezvous/assets/rendezvous-title.svg" alt="Rendezvous" height="72" /></a>
+    <h3><em>where conversations meet, serverlessly.</em></h3>
+</div>
 
-[![License](https://img.shields.io/github/license/predatorray/rendezvous)][1]
-[![Build Status](https://img.shields.io/github/actions/workflow/status/predatorray/rendezvous/ci.yml?branch=main)][2]
+<p align="center">
+    A <b><i>serverless</i></b>, Zoom-like video conferencing web app,<br>
+    built with React, TypeScript, MUI, and PeerJS on top of WebRTC.
+</p>
 
-A serverless, Zoom-like video conferencing web app. Built with React,
-TypeScript, MUI, and [PeerJS](https://peerjs.com) on top of WebRTC.
+<p align="center">
+    <a href="https://github.com/predatorray/rendezvous/blob/main/LICENSE"><img src="https://img.shields.io/github/license/predatorray/rendezvous" alt="License"/></a>
+    <a href="https://github.com/predatorray/rendezvous/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/predatorray/rendezvous/ci.yml?branch=main" alt="Build Status"/></a>
+</p>
+
+---
 
 👉 **Try it online: <https://predatorray.github.io/rendezvous/>**
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/predatorray/rendezvous/assets/screenshot-homepage.png" width="45%" />
-  <img src="https://raw.githubusercontent.com/predatorray/rendezvous/assets/screenshot-meeting.png" width="45%" />
-</p>
+![Meeting Screenshot](https://raw.githubusercontent.com/predatorray/rendezvous/assets/screenshot-meeting.png)
 
 There is no application server — the **host** of each meeting acts as a
 relay hub for chat messages and media streams, so each participant only
