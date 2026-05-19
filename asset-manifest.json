@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/rendezvous/static/css/main.03cc0874.css",
-    "main.js": "/rendezvous/static/js/main.510c6029.js",
+    "main.js": "/rendezvous/static/js/main.3b671016.js",
     "index.html": "/rendezvous/index.html",
     "main.03cc0874.css.map": "/rendezvous/static/css/main.03cc0874.css.map",
-    "main.510c6029.js.map": "/rendezvous/static/js/main.510c6029.js.map"
+    "main.3b671016.js.map": "/rendezvous/static/js/main.3b671016.js.map"
   },
   "entrypoints": [
     "static/css/main.03cc0874.css",
-    "static/js/main.510c6029.js"
+    "static/js/main.3b671016.js"
   ]
 }
