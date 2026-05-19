@@ -315,8 +315,14 @@ function LiveMeeting({
                 variant="subtitle2"
                 noWrap
                 sx={{
-                  fontWeight: 600,
+                  fontWeight: 700,
+                  letterSpacing: -0.5,
                   display: { xs: 'none', sm: 'inline' },
+                  background:
+                    'linear-gradient(135deg, #7c4dff 0%, #00bcd4 50%, #ff4081 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
                 }}
               >
                 Rendezvous
