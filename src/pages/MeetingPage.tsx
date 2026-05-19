@@ -8,7 +8,6 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
-  Divider,
   Drawer,
   IconButton,
   Stack,
@@ -135,6 +134,39 @@ function LiveMeeting({
   const [participantsOpen, setParticipantsOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
   const [unread, setUnread] = useState(0);
+
+  // Rail split: ratio of vertical space given to participants when both
+  // participants and chat panels are open. Adjusted by dragging the splitter.
+  const RAIL_MIN_PANEL_PX = 150;
+  const [participantsRatio, setParticipantsRatio] = useState(0.5);
+  const railBodyRef = useRef<HTMLDivElement>(null);
+  const onSplitterPointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    const target = e.currentTarget;
+    target.setPointerCapture(e.pointerId);
+    const onMove = (ev: PointerEvent) => {
+      const el = railBodyRef.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      if (rect.height <= 0) return;
+      const y = ev.clientY - rect.top;
+      const minRatio = Math.min(0.4, RAIL_MIN_PANEL_PX / rect.height);
+      const maxRatio = 1 - minRatio;
+      const r = Math.min(Math.max(y / rect.height, minRatio), maxRatio);
+      setParticipantsRatio(r);
+    };
+    const onUp = (ev: PointerEvent) => {
+      try {
+        target.releasePointerCapture(ev.pointerId);
+      } catch {}
+      target.removeEventListener('pointermove', onMove);
+      target.removeEventListener('pointerup', onUp);
+      target.removeEventListener('pointercancel', onUp);
+    };
+    target.addEventListener('pointermove', onMove);
+    target.addEventListener('pointerup', onUp);
+    target.addEventListener('pointercancel', onUp);
+  };
 
   const confirmLeave = () => {
     setLeaveOpen(false);
@@ -316,14 +348,6 @@ function LiveMeeting({
               >
                 <IosShareIcon fontSize="small" />
               </IconButton>
-              <Typography
-                variant="caption"
-                noWrap
-                sx={{ opacity: 0.6 }}
-              >
-                {meeting.members.length}{' '}
-                {meeting.members.length === 1 ? t.meeting_person : t.meeting_people}
-              </Typography>
             </Stack>
           </Stack>
           <VideoGrid
@@ -368,6 +392,7 @@ function LiveMeeting({
           }}
         >
           <Box
+            ref={railBodyRef}
             sx={{
               height: '100%',
               display: 'flex',
@@ -378,7 +403,12 @@ function LiveMeeting({
             {participantsOpen && (
               <Box
                 sx={{
-                  flex: chatOpen ? 1 : '1 1 100%',
+                  ...(chatOpen
+                    ? {
+                        height: `${participantsRatio * 100}%`,
+                        flexShrink: 0,
+                      }
+                    : { flex: '1 1 100%' }),
                   minHeight: 0,
                   display: 'flex',
                   flexDirection: 'column',
@@ -393,11 +423,42 @@ function LiveMeeting({
                 />
               </Box>
             )}
-            {participantsOpen && chatOpen && <Divider />}
+            {participantsOpen && chatOpen && (
+              <Box
+                role="separator"
+                aria-orientation="horizontal"
+                aria-label={t.rail_resize}
+                tabIndex={0}
+                onPointerDown={onSplitterPointerDown}
+                sx={{
+                  height: 6,
+                  flexShrink: 0,
+                  cursor: 'row-resize',
+                  bgcolor: 'divider',
+                  position: 'relative',
+                  touchAction: 'none',
+                  '&:hover, &:focus-visible': {
+                    bgcolor: 'primary.main',
+                  },
+                  '&::after': {
+                    content: '""',
+                    position: 'absolute',
+                    left: '50%',
+                    top: '50%',
+                    transform: 'translate(-50%, -50%)',
+                    width: 28,
+                    height: 2,
+                    borderRadius: 1,
+                    bgcolor: 'background.paper',
+                    opacity: 0.6,
+                  },
+                }}
+              />
+            )}
             {chatOpen && (
               <Box
                 sx={{
-                  flex: participantsOpen ? 1 : '1 1 100%',
+                  flex: 1,
                   minHeight: 0,
                   display: 'flex',
                   flexDirection: 'column',

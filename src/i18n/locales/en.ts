@@ -82,6 +82,8 @@ const en = {
   participants_kick_confirm: 'Remove',
   participants_system_kicked: (name: string) => `${name} was removed`,
 
+  rail_resize: 'Resize panels',
+
   share_title: 'Invite others',
   share_meeting_code: 'Meeting code',
   share_copy_code: 'Copy code',

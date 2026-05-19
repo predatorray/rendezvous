@@ -79,6 +79,8 @@ const zh = {
   participants_kick_confirm: '移出',
   participants_system_kicked: (name: string) => `${name} 已被移出会议`,
 
+  rail_resize: '调整面板大小',
+
   share_title: '邀请他人',
   share_meeting_code: '会议代码',
   share_copy_code: '复制代码',

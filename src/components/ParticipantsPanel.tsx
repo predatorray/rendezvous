@@ -140,18 +140,30 @@ export default function ParticipantsPanel({
                     <Stack
                       direction="row"
                       spacing={0.5}
-                      sx={{ mt: 0.25, opacity: 0.7 }}
+                      sx={{ mt: 0.25 }}
                       component="span"
                     >
                       {m.audio ? (
-                        <MicIcon sx={{ fontSize: 14 }} />
+                        <MicIcon
+                          sx={{ fontSize: 14, opacity: 0.7 }}
+                          aria-label={`${m.name}: audio on`}
+                        />
                       ) : (
-                        <MicOffIcon sx={{ fontSize: 14 }} />
+                        <MicOffIcon
+                          sx={{ fontSize: 14, color: 'error.main' }}
+                          aria-label={`${m.name}: audio off`}
+                        />
                       )}
                       {m.video ? (
-                        <VideocamIcon sx={{ fontSize: 14 }} />
+                        <VideocamIcon
+                          sx={{ fontSize: 14, opacity: 0.7 }}
+                          aria-label={`${m.name}: video on`}
+                        />
                       ) : (
-                        <VideocamOffIcon sx={{ fontSize: 14 }} />
+                        <VideocamOffIcon
+                          sx={{ fontSize: 14, color: 'error.main' }}
+                          aria-label={`${m.name}: video off`}
+                        />
                       )}
                     </Stack>
                   }

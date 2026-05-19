@@ -82,6 +82,8 @@ const fr = {
   participants_kick_confirm: 'Retirer',
   participants_system_kicked: (name: string) => `${name} a été retiré`,
 
+  rail_resize: 'Redimensionner les panneaux',
+
   share_title: 'Inviter d’autres personnes',
   share_meeting_code: 'Code de la réunion',
   share_copy_code: 'Copier le code',
