@@ -8,7 +8,7 @@ const en = {
   home_host: 'Host new meeting',
   home_or_join: 'or join',
   home_meeting_code: 'Meeting code',
-  home_meeting_code_placeholder: 'abcxyz',
+  home_meeting_code_placeholder: 'ABCXYZ',
   home_join: 'Join',
   home_error_name: 'Please enter your name.',
   home_error_code: 'Meeting code must be 6 letters.',

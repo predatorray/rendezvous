@@ -25,7 +25,7 @@ import ParticipantsPanel from '../components/ParticipantsPanel';
 import ThemeToggle from '../components/ThemeToggle';
 import { useMeeting } from '../peer/useMeeting';
 import { useIsSpeaking } from '../peer/useIsSpeaking';
-import { isValidMeetingCode } from '../util/code';
+import { displayMeetingCode, isValidMeetingCode } from '../util/code';
 import { getStoredName, setStoredName } from '../util/storage';
 import { useT } from '../i18n/useLangContext';
 import LanguageMenu from '../i18n/LanguageMenu';
@@ -66,7 +66,7 @@ export default function MeetingPage() {
     return (
       <CenteredCard>
         <Typography variant="h6" gutterBottom>
-          {t.meeting_join_title} <code style={{ letterSpacing: 2 }}>{normalizedCode}</code>
+          {t.meeting_join_title} <code style={{ letterSpacing: 2 }}>{displayMeetingCode(normalizedCode)}</code>
         </Typography>
         <Typography variant="body2" sx={{ opacity: 0.7, mb: 3 }}>
           {t.meeting_enter_name}
@@ -330,7 +330,7 @@ function LiveMeeting({
                   letterSpacing: 1.5,
                 }}
               >
-                {code}
+                {displayMeetingCode(code)}
               </Typography>
             </Stack>
             <Stack

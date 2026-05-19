@@ -5,6 +5,7 @@ import en from '../i18n/locales/en';
 
 describe('ShareDialog', () => {
   const CODE = 'abcxyz';
+  const DISPLAY = 'ABCXYZ';
 
   function setupClipboard() {
     const writeText = jest.fn().mockResolvedValue(undefined);
@@ -27,11 +28,11 @@ describe('ShareDialog', () => {
       <ShareDialog open onClose={() => {}} code={CODE} />
     );
     expect(screen.getByText(en.share_title)).toBeInTheDocument();
-    const codeInput = screen.getByDisplayValue(CODE);
+    const codeInput = screen.getByDisplayValue(DISPLAY);
     expect(codeInput).toBeInTheDocument();
     const link = screen
       .getAllByRole('textbox')
-      .find((el) => (el as HTMLInputElement).value.includes(`#/m/${CODE}`));
+      .find((el) => (el as HTMLInputElement).value.includes(`#/m/${DISPLAY}`));
     expect(link).toBeDefined();
   });
 
@@ -41,7 +42,7 @@ describe('ShareDialog', () => {
       <ShareDialog open onClose={() => {}} code={CODE} />
     );
     userEvent.click(screen.getByLabelText(en.share_copy_code));
-    await waitFor(() => expect(writeText).toHaveBeenCalledWith(CODE));
+    await waitFor(() => expect(writeText).toHaveBeenCalledWith(DISPLAY));
   });
 
   it('calls onClose when Done is clicked', () => {
@@ -57,6 +58,6 @@ describe('ShareDialog', () => {
     );
     const xLink = screen.getByLabelText(en.share_on('X')) as HTMLAnchorElement;
     expect(xLink.href).toContain('twitter.com/intent/tweet');
-    expect(decodeURIComponent(xLink.href)).toContain(CODE);
+    expect(decodeURIComponent(xLink.href)).toContain(DISPLAY);
   });
 });

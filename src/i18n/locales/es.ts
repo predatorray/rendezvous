@@ -8,7 +8,7 @@ const es = {
   home_host: 'Iniciar nueva reunión',
   home_or_join: 'o unirse',
   home_meeting_code: 'Código de reunión',
-  home_meeting_code_placeholder: 'abcxyz',
+  home_meeting_code_placeholder: 'ABCXYZ',
   home_join: 'Unirse',
   home_error_name: 'Por favor, introduce tu nombre.',
   home_error_code: 'El código de reunión debe tener 6 letras.',

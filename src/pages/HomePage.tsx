@@ -185,7 +185,7 @@ export default function HomePage() {
                     fullWidth
                     inputProps={{
                       maxLength: 12,
-                      style: { textTransform: 'lowercase' },
+                      style: { textTransform: 'uppercase' },
                       autoCapitalize: 'none',
                       autoCorrect: 'off',
                       spellCheck: false,

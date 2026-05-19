@@ -8,7 +8,7 @@ const ja = {
   home_host: '新しいミーティングを開始',
   home_or_join: 'または参加',
   home_meeting_code: 'ミーティングコード',
-  home_meeting_code_placeholder: 'abcxyz',
+  home_meeting_code_placeholder: 'ABCXYZ',
   home_join: '参加',
   home_error_name: 'お名前を入力してください。',
   home_error_code: 'ミーティングコードは6文字である必要があります。',

@@ -8,7 +8,7 @@ const fr = {
   home_host: 'Lancer une réunion',
   home_or_join: 'ou rejoindre',
   home_meeting_code: 'Code de la réunion',
-  home_meeting_code_placeholder: 'abcxyz',
+  home_meeting_code_placeholder: 'ABCXYZ',
   home_join: 'Rejoindre',
   home_error_name: 'Veuillez entrer votre nom.',
   home_error_code: 'Le code de la réunion doit comporter 6 lettres.',

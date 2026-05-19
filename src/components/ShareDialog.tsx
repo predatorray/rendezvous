@@ -22,6 +22,7 @@ import TelegramIcon from '@mui/icons-material/Telegram';
 import RedditIcon from '@mui/icons-material/Reddit';
 import EmailIcon from '@mui/icons-material/Email';
 import { useT } from '../i18n/useLangContext';
+import { displayMeetingCode } from '../util/code';
 
 interface Props {
   open: boolean;
@@ -85,8 +86,9 @@ export default function ShareDialog({ open, onClose, code }: Props) {
   const t = useT();
   const [copiedField, setCopiedField] = useState<'code' | 'link' | null>(null);
 
-  const link = `${window.location.origin}${window.location.pathname}#/m/${code}`;
-  const shareText = t.share_text(code);
+  const shownCode = displayMeetingCode(code);
+  const link = `${window.location.origin}${window.location.pathname}#/m/${shownCode}`;
+  const shareText = t.share_text(shownCode);
   const shareSubject = t.share_subject;
   const canNativeShare =
     typeof navigator !== 'undefined' && typeof navigator.share === 'function';
@@ -127,7 +129,7 @@ export default function ShareDialog({ open, onClose, code }: Props) {
             </Typography>
             <Stack direction="row" spacing={1}>
               <TextField
-                value={code}
+                value={shownCode}
                 fullWidth
                 size="small"
                 InputProps={{ readOnly: true }}
@@ -140,7 +142,7 @@ export default function ShareDialog({ open, onClose, code }: Props) {
                 }}
               />
               <Tooltip title={copiedField === 'code' ? t.share_copied : t.share_copy_code}>
-                <IconButton onClick={() => copy(code, 'code')}>
+                <IconButton onClick={() => copy(shownCode, 'code')}>
                   {copiedField === 'code' ? <CheckIcon /> : <ContentCopyIcon />}
                 </IconButton>
               </Tooltip>

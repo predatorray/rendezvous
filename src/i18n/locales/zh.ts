@@ -8,7 +8,7 @@ const zh = {
   home_host: '发起会议',
   home_or_join: '或加入',
   home_meeting_code: '会议代码',
-  home_meeting_code_placeholder: 'abcxyz',
+  home_meeting_code_placeholder: 'ABCXYZ',
   home_join: '加入',
   home_error_name: '请输入你的名字。',
   home_error_code: '会议代码必须是 6 个字母。',

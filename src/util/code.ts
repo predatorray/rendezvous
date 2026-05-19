@@ -21,6 +21,12 @@ export function isValidMeetingCode(code: string): boolean {
   return code.length === LENGTH && /^[a-z]+$/.test(code);
 }
 
+// Codes are stored and routed in lowercase, but presented to humans
+// in uppercase to make them easier to read aloud and transcribe.
+export function displayMeetingCode(code: string): string {
+  return code.toUpperCase();
+}
+
 // PeerJS peer IDs must be DNS-ish; we namespace to avoid colliding with
 // other PeerJS apps using the public broker.
 export function peerIdForMeeting(code: string): string {
