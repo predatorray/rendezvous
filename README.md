@@ -26,6 +26,10 @@ relay hub for chat messages and media streams, so each participant only
 maintains connections to the host instead of every other participant. The
 PeerJS public broker is used only for the initial WebRTC signaling.
 
+## About the name
+
+*Rendezvous* is named after the [Rendezvous Lodge](https://www.whistlerblackcomb.com/) atop Blackcomb Mountain in Whistler Village — the spot where the author meets up with skier friends.
+
 ## Features
 
 - Pick a name, host a meeting, or join an existing one by code or link
