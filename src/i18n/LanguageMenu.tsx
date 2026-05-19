@@ -59,24 +59,28 @@ export default function LanguageMenu({ variant = 'button' }: Props) {
         open={open}
         onClose={() => setAnchorEl(null)}
       >
-        {SUPPORTED_LANGUAGES.map((code) => (
-          <MenuItem
-            key={code}
-            selected={code === lang}
-            onClick={() => {
-              setLang(code as SupportedLanguages);
-              setLanguagePreference(code);
-              setAnchorEl(null);
-            }}
-          >
-            <ListItemText sx={{ mr: 2 }}>
-              {getTranslations(code as SupportedLanguages).lang}
-            </ListItemText>
-            <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-              {code}
-            </Typography>
-          </MenuItem>
-        ))}
+        {[...SUPPORTED_LANGUAGES]
+          .sort((a, b) =>
+            getTranslations(a).lang.localeCompare(getTranslations(b).lang),
+          )
+          .map((code) => (
+            <MenuItem
+              key={code}
+              selected={code === lang}
+              onClick={() => {
+                setLang(code as SupportedLanguages);
+                setLanguagePreference(code);
+                setAnchorEl(null);
+              }}
+            >
+              <ListItemText sx={{ mr: 2 }}>
+                {getTranslations(code as SupportedLanguages).lang}
+              </ListItemText>
+              <Typography variant="body2" sx={{ color: 'text.secondary' }}>
+                {code}
+              </Typography>
+            </MenuItem>
+          ))}
       </Menu>
     </>
   );
