@@ -368,6 +368,8 @@ function LiveMeeting({
             participantCount={meeting.members.length}
             unreadCount={unread}
             isSpeaking={isSpeaking}
+            chatOpen={chatOpen}
+            participantsOpen={participantsOpen}
           />
         </Box>
 

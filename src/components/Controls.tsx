@@ -21,6 +21,8 @@ interface Props {
   participantCount: number;
   unreadCount: number;
   isSpeaking?: boolean;
+  chatOpen?: boolean;
+  participantsOpen?: boolean;
 }
 
 const speakingPulse = keyframes`
@@ -36,6 +38,7 @@ function PillButton({
   children,
   danger,
   pulsing,
+  highlighted,
 }: {
   label: string;
   active: boolean;
@@ -43,6 +46,7 @@ function PillButton({
   children: React.ReactNode;
   danger?: boolean;
   pulsing?: boolean;
+  highlighted?: boolean;
 }) {
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -62,15 +66,21 @@ function PillButton({
             ? neutralBg
             : 'rgba(220,38,38,0.85)',
           color: danger || !active ? '#fff' : 'text.primary',
-          transition: 'transform 120ms ease, box-shadow 120ms ease',
+          transition: 'transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease',
           ...(pulsing && {
             animation: `${speakingPulse} 1.1s ease-out infinite`,
             bgcolor: 'rgba(45,140,255,0.18)',
             color: '#2D8CFF',
           }),
+          ...(highlighted && {
+            bgcolor: '#2D8CFF',
+            color: '#fff',
+          }),
           '&:hover': {
             bgcolor: danger
               ? '#b91c1c'
+              : highlighted
+              ? '#1f6fd9'
               : active
               ? neutralHover
               : 'rgba(220,38,38,1)',
@@ -95,6 +105,8 @@ export default function Controls({
   participantCount,
   unreadCount,
   isSpeaking,
+  chatOpen,
+  participantsOpen,
 }: Props) {
   const t = useT();
   return (
@@ -133,6 +145,7 @@ export default function Controls({
           label={t.controls_participants}
           active={true}
           onClick={onToggleParticipants}
+          highlighted={participantsOpen}
         >
           <Box sx={{ position: 'relative' }}>
             <PeopleIcon />
@@ -160,7 +173,12 @@ export default function Controls({
             )}
           </Box>
         </PillButton>
-        <PillButton label={t.controls_chat} active={true} onClick={onToggleChat}>
+        <PillButton
+          label={t.controls_chat}
+          active={true}
+          onClick={onToggleChat}
+          highlighted={chatOpen}
+        >
           <Box sx={{ position: 'relative' }}>
             <ChatIcon />
             {unreadCount > 0 && (
