@@ -76,9 +76,13 @@ export default function HomePage() {
     <Box
       sx={{
         minHeight: '100%',
+        '@supports (min-height: 100dvh)': {
+          minHeight: '100dvh',
+        },
         display: 'flex',
         flexDirection: 'column',
-        py: { xs: 4, md: 6 },
+        pt: { xs: 8, md: 6 },
+        pb: { xs: 4, md: 6 },
         px: { xs: 2, md: 4 },
         position: 'relative',
       }}
