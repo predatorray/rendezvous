@@ -3,14 +3,73 @@ import {
   Box,
   Divider,
   IconButton,
+  Popover,
   Stack,
+  Tab,
+  Tabs,
   TextField,
   Typography,
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import SendIcon from '@mui/icons-material/Send';
+import EmojiEmotionsIcon from '@mui/icons-material/EmojiEmotions';
 import { TimelineItem, isSystem } from '../types';
 import { useT } from '../i18n/useLangContext';
+
+const EMOJI_GROUPS: { label: string; emojis: string[] }[] = [
+  {
+    label: 'Smileys',
+    emojis: [
+      '😀', '😃', '😄', '😁', '😆', '😅', '🤣', '😂',
+      '🙂', '🙃', '😉', '😊', '😇', '🥰', '😍', '🤩',
+      '😘', '😗', '😚', '😙', '😋', '😛', '😜', '🤪',
+      '😝', '🤔', '🤨', '😐', '😑', '😶', '🙄', '😏',
+      '😴', '🤤', '😪', '😵', '🥳', '😎', '🤓', '🧐',
+      '😢', '😭', '😤', '😠', '😡', '🤯', '😱', '😨',
+    ],
+  },
+  {
+    label: 'Gestures',
+    emojis: [
+      '👍', '👎', '👌', '✌️', '🤞', '🤟', '🤘', '🤙',
+      '👈', '👉', '👆', '👇', '☝️', '✋', '🤚', '🖐️',
+      '🖖', '👋', '🤝', '🙏', '💪', '👏', '🙌', '👐',
+    ],
+  },
+  {
+    label: 'Hearts',
+    emojis: [
+      '❤️', '🧡', '💛', '💚', '💙', '💜', '🖤', '🤍',
+      '🤎', '💔', '❣️', '💕', '💞', '💓', '💗', '💖',
+      '💘', '💝', '💟', '✨', '🔥', '🎉', '🎊', '⭐',
+    ],
+  },
+  {
+    label: 'Animals',
+    emojis: [
+      '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', '🐻', '🐼',
+      '🐨', '🐯', '🦁', '🐮', '🐷', '🐸', '🐵', '🐔',
+      '🐧', '🐦', '🐤', '🦆', '🦅', '🦉', '🐺', '🐗',
+    ],
+  },
+  {
+    label: 'Food',
+    emojis: [
+      '🍎', '🍐', '🍊', '🍋', '🍌', '🍉', '🍇', '🍓',
+      '🍒', '🍑', '🥭', '🍍', '🥥', '🥝', '🍅', '🥑',
+      '🍔', '🍕', '🌭', '🥪', '🌮', '🌯', '🍣', '🍜',
+      '🍰', '🎂', '🍩', '🍪', '☕', '🍵', '🍺', '🍷',
+    ],
+  },
+  {
+    label: 'Activities',
+    emojis: [
+      '⚽', '🏀', '🏈', '⚾', '🎾', '🏐', '🏉', '🎱',
+      '🏓', '🏸', '🥊', '⛳', '🎣', '🎮', '🎲', '🎯',
+      '🎸', '🎹', '🎺', '🎻', '🥁', '🎤', '🎧', '🎬',
+    ],
+  },
+];
 
 interface Props {
   onClose: () => void;
@@ -35,6 +94,24 @@ export default function ChatPanel({
   const t = useT();
   const [draft, setDraft] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  const [emojiAnchor, setEmojiAnchor] = useState<HTMLElement | null>(null);
+  const [emojiTab, setEmojiTab] = useState(0);
+
+  const insertEmoji = (emoji: string) => {
+    const el = inputRef.current;
+    const start = el?.selectionStart ?? draft.length;
+    const end = el?.selectionEnd ?? draft.length;
+    const next = draft.slice(0, start) + emoji + draft.slice(end);
+    setDraft(next);
+    requestAnimationFrame(() => {
+      const node = inputRef.current;
+      if (!node) return;
+      const caret = start + emoji.length;
+      node.focus();
+      node.setSelectionRange(caret, caret);
+    });
+  };
 
   useEffect(() => {
     const el = scrollRef.current;
@@ -170,8 +247,15 @@ export default function ChatPanel({
             maxRows={4}
             size="small"
             onKeyDown={onKey}
+            inputRef={inputRef}
             inputProps={{ maxLength: 2000 }}
           />
+          <IconButton
+            onClick={(e) => setEmojiAnchor(e.currentTarget)}
+            aria-label={t.chat_emoji}
+          >
+            <EmojiEmotionsIcon />
+          </IconButton>
           <IconButton
             color="primary"
             onClick={handleSend}
@@ -181,6 +265,53 @@ export default function ChatPanel({
             <SendIcon />
           </IconButton>
         </Stack>
+        <Popover
+          open={Boolean(emojiAnchor)}
+          anchorEl={emojiAnchor}
+          onClose={() => setEmojiAnchor(null)}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          transformOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          slotProps={{ paper: { sx: { width: 304 } } }}
+        >
+          <Tabs
+            value={emojiTab}
+            onChange={(_, v) => setEmojiTab(v)}
+            variant="scrollable"
+            scrollButtons={false}
+            sx={{ minHeight: 36, '& .MuiTab-root': { minHeight: 36, minWidth: 0, px: 1.25, fontSize: 12 } }}
+          >
+            {EMOJI_GROUPS.map((g) => (
+              <Tab key={g.label} label={g.label} />
+            ))}
+          </Tabs>
+          <Divider />
+          <Box
+            sx={{
+              p: 1,
+              display: 'grid',
+              gridTemplateColumns: 'repeat(8, 1fr)',
+              gap: 0.25,
+              maxHeight: 220,
+              overflowY: 'auto',
+            }}
+          >
+            {EMOJI_GROUPS[emojiTab].emojis.map((e, i) => (
+              <IconButton
+                key={`${e}-${i}`}
+                size="small"
+                onClick={() => {
+                  insertEmoji(e);
+                  setEmojiAnchor(null);
+                }}
+                sx={{ fontSize: 20, lineHeight: 1, borderRadius: 1 }}
+              >
+                <Box component="span" sx={{ fontSize: 20, lineHeight: 1 }}>
+                  {e}
+                </Box>
+              </IconButton>
+            ))}
+          </Box>
+        </Popover>
       </Box>
     </Box>
   );

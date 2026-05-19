@@ -54,6 +54,7 @@ const zh = {
   chat_title: '聊天',
   chat_close: '关闭聊天',
   chat_send: '发送消息',
+  chat_emoji: '插入表情',
   chat_placeholder: '消息…',
   chat_empty: '还没有消息。',
   chat_you: '你',

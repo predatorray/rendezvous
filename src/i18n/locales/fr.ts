@@ -56,6 +56,7 @@ const fr = {
   chat_title: 'Discussion',
   chat_close: 'Fermer la discussion',
   chat_send: 'Envoyer le message',
+  chat_emoji: 'Insérer un emoji',
   chat_placeholder: 'Message…',
   chat_empty: 'Pas encore de messages.',
   chat_you: 'Vous',

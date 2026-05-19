@@ -90,6 +90,20 @@ describe('ChatPanel', () => {
     expect(onSend).not.toHaveBeenCalled();
   });
 
+  it('inserts an emoji into the draft via the picker', () => {
+    const onSend = jest.fn();
+    renderWithProviders(
+      <ChatPanel onClose={() => {}} timeline={[]} onSend={onSend} selfId={SELF} />
+    );
+    const input = screen.getByPlaceholderText(en.chat_placeholder) as HTMLTextAreaElement;
+    userEvent.type(input, 'hi ');
+    userEvent.click(screen.getByLabelText(en.chat_emoji));
+    userEvent.click(screen.getByText('😀'));
+    expect(input.value).toBe('hi 😀');
+    userEvent.click(screen.getByLabelText(en.chat_send));
+    expect(onSend).toHaveBeenCalledWith('hi 😀');
+  });
+
   it('close button invokes onClose', () => {
     const onClose = jest.fn();
     renderWithProviders(
