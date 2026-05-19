@@ -127,6 +127,16 @@ This gives every client a constant number of signalling sessions with
 the host (one data connection + N media connections), avoiding the
 classic O(N²) mesh.
 
+```mermaid
+flowchart LR
+    A[Client A] -- stream A --> H((Host))
+    B[Client B] -- stream B --> H
+    C[Client C] -- stream C --> H
+    H -- streams B, C --> A
+    H -- streams A, C --> B
+    H -- streams A, B --> C
+```
+
 ## Limitations / caveats
 
 - The host’s upstream bandwidth bounds meeting size (relay is on a
