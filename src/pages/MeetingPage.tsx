@@ -8,6 +8,8 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  Divider,
+  Drawer,
   IconButton,
   Stack,
   Typography,
@@ -17,9 +19,10 @@ import {
 import IosShareIcon from '@mui/icons-material/IosShare';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import VideoGrid from '../components/VideoGrid';
-import ChatDrawer from '../components/ChatDrawer';
+import ChatPanel from '../components/ChatPanel';
 import Controls from '../components/Controls';
 import ShareDialog from '../components/ShareDialog';
+import ParticipantsPanel from '../components/ParticipantsPanel';
 import ThemeToggle from '../components/ThemeToggle';
 import { useMeeting } from '../peer/useMeeting';
 import { useIsSpeaking } from '../peer/useIsSpeaking';
@@ -129,6 +132,7 @@ function LiveMeeting({
 
   const [chatOpen, setChatOpen] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
+  const [participantsOpen, setParticipantsOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
   const [unread, setUnread] = useState(0);
 
@@ -219,6 +223,8 @@ function LiveMeeting({
         <Typography variant="h6" gutterBottom>
           {meeting.endedReason === 'host-left'
             ? t.meeting_ended_host
+            : meeting.endedReason === 'kicked'
+            ? t.meeting_ended_kicked
             : t.meeting_ended_self}
         </Typography>
         <Button variant="contained" onClick={() => navigate('/')}>
@@ -229,8 +235,9 @@ function LiveMeeting({
   }
 
   const drawerWidth = isMobile ? Math.min(window.innerWidth, 360) : 340;
+  const railOpen = chatOpen || participantsOpen;
   // On mobile, overlay the drawer instead of squeezing the video grid.
-  const pushContent = chatOpen && !isMobile;
+  const pushContent = railOpen && !isMobile;
 
   return (
     <Box
@@ -333,20 +340,79 @@ function LiveMeeting({
             onToggleChat={() => setChatOpen((v) => !v)}
             onShare={() => setShareOpen(true)}
             onLeave={() => setLeaveOpen(true)}
+            onToggleParticipants={() => setParticipantsOpen((v) => !v)}
+            participantCount={meeting.members.length}
             unreadCount={unread}
             isSpeaking={isSpeaking}
           />
         </Box>
 
-        <ChatDrawer
-          open={chatOpen}
-          onClose={() => setChatOpen(false)}
-          timeline={meeting.timeline}
-          onSend={meeting.sendChat}
-          selfId={meeting.selfId}
-          width={drawerWidth}
+        <Drawer
+          anchor="right"
+          open={railOpen}
+          onClose={() => {
+            setChatOpen(false);
+            setParticipantsOpen(false);
+          }}
           variant={isMobile ? 'temporary' : 'persistent'}
-        />
+          slotProps={{
+            paper: {
+              sx: {
+                width: drawerWidth,
+                maxWidth: '100vw',
+                bgcolor: 'background.paper',
+                borderLeft: '1px solid',
+                borderColor: 'divider',
+              },
+            },
+          }}
+        >
+          <Box
+            sx={{
+              height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              minHeight: 0,
+            }}
+          >
+            {participantsOpen && (
+              <Box
+                sx={{
+                  flex: chatOpen ? 1 : '1 1 100%',
+                  minHeight: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
+              >
+                <ParticipantsPanel
+                  onClose={() => setParticipantsOpen(false)}
+                  members={sortedMembers}
+                  selfId={meeting.selfId}
+                  isHost={isHost}
+                  onKick={meeting.kick}
+                />
+              </Box>
+            )}
+            {participantsOpen && chatOpen && <Divider />}
+            {chatOpen && (
+              <Box
+                sx={{
+                  flex: participantsOpen ? 1 : '1 1 100%',
+                  minHeight: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
+              >
+                <ChatPanel
+                  onClose={() => setChatOpen(false)}
+                  timeline={meeting.timeline}
+                  onSend={meeting.sendChat}
+                  selfId={meeting.selfId}
+                />
+              </Box>
+            )}
+          </Box>
+        </Drawer>
       </Box>
 
       <ShareDialog

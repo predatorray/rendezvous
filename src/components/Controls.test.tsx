@@ -12,6 +12,8 @@ function makeProps(over: Partial<React.ComponentProps<typeof Controls>> = {}) {
     onToggleChat: jest.fn(),
     onShare: jest.fn(),
     onLeave: jest.fn(),
+    onToggleParticipants: jest.fn(),
+    participantCount: 1,
     unreadCount: 0,
     ...over,
   };
@@ -42,11 +44,22 @@ describe('Controls', () => {
     userEvent.click(screen.getByLabelText(en.controls_chat));
     userEvent.click(screen.getByLabelText(en.controls_share));
     userEvent.click(screen.getByLabelText(en.controls_leave));
+    userEvent.click(screen.getByLabelText(en.controls_participants));
     expect(props.onToggleAudio).toHaveBeenCalledTimes(1);
     expect(props.onToggleVideo).toHaveBeenCalledTimes(1);
     expect(props.onToggleChat).toHaveBeenCalledTimes(1);
     expect(props.onShare).toHaveBeenCalledTimes(1);
     expect(props.onLeave).toHaveBeenCalledTimes(1);
+    expect(props.onToggleParticipants).toHaveBeenCalledTimes(1);
+  });
+
+  it('renders the participant count badge and caps it at 99+', () => {
+    const { rerender } = renderWithProviders(
+      <Controls {...makeProps({ participantCount: 4 })} />
+    );
+    expect(screen.getByText('4')).toBeInTheDocument();
+    rerender(<Controls {...makeProps({ participantCount: 250 })} />);
+    expect(screen.getByText('99+')).toBeInTheDocument();
   });
 
   it('renders the unread chat badge with the count, capped at 9+', () => {

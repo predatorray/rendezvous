@@ -1,6 +1,6 @@
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders, screen } from '../test-utils';
-import ChatDrawer from './ChatDrawer';
+import ChatPanel from './ChatPanel';
 import { TimelineItem } from '../types';
 import en from '../i18n/locales/en';
 
@@ -32,30 +32,21 @@ function buildTimeline(): TimelineItem[] {
   ];
 }
 
-describe('ChatDrawer', () => {
+describe('ChatPanel', () => {
   it('shows an empty message when timeline is empty', () => {
     renderWithProviders(
-      <ChatDrawer
-        open
-        onClose={() => {}}
-        timeline={[]}
-        onSend={() => {}}
-        selfId={SELF}
-        variant="temporary"
-      />
+      <ChatPanel onClose={() => {}} timeline={[]} onSend={() => {}} selfId={SELF} />
     );
     expect(screen.getByText(en.chat_empty)).toBeInTheDocument();
   });
 
   it('renders system, peer, and self messages', () => {
     renderWithProviders(
-      <ChatDrawer
-        open
+      <ChatPanel
         onClose={() => {}}
         timeline={buildTimeline()}
         onSend={() => {}}
         selfId={SELF}
-        variant="temporary"
       />
     );
     expect(screen.getByText(/Alice joined/)).toBeInTheDocument();
@@ -67,14 +58,7 @@ describe('ChatDrawer', () => {
   it('sends a message via the send button and clears the input', () => {
     const onSend = jest.fn();
     renderWithProviders(
-      <ChatDrawer
-        open
-        onClose={() => {}}
-        timeline={[]}
-        onSend={onSend}
-        selfId={SELF}
-        variant="temporary"
-      />
+      <ChatPanel onClose={() => {}} timeline={[]} onSend={onSend} selfId={SELF} />
     );
     const input = screen.getByPlaceholderText(en.chat_placeholder);
     userEvent.type(input, 'hello world');
@@ -86,14 +70,7 @@ describe('ChatDrawer', () => {
   it('sends on Enter (without Shift)', () => {
     const onSend = jest.fn();
     renderWithProviders(
-      <ChatDrawer
-        open
-        onClose={() => {}}
-        timeline={[]}
-        onSend={onSend}
-        selfId={SELF}
-        variant="temporary"
-      />
+      <ChatPanel onClose={() => {}} timeline={[]} onSend={onSend} selfId={SELF} />
     );
     const input = screen.getByPlaceholderText(en.chat_placeholder);
     userEvent.type(input, 'hi{enter}');
@@ -103,14 +80,7 @@ describe('ChatDrawer', () => {
   it('does not send when the draft is whitespace-only', () => {
     const onSend = jest.fn();
     renderWithProviders(
-      <ChatDrawer
-        open
-        onClose={() => {}}
-        timeline={[]}
-        onSend={onSend}
-        selfId={SELF}
-        variant="temporary"
-      />
+      <ChatPanel onClose={() => {}} timeline={[]} onSend={onSend} selfId={SELF} />
     );
     const input = screen.getByPlaceholderText(en.chat_placeholder);
     userEvent.type(input, '   ');
@@ -123,14 +93,7 @@ describe('ChatDrawer', () => {
   it('close button invokes onClose', () => {
     const onClose = jest.fn();
     renderWithProviders(
-      <ChatDrawer
-        open
-        onClose={onClose}
-        timeline={[]}
-        onSend={() => {}}
-        selfId={SELF}
-        variant="temporary"
-      />
+      <ChatPanel onClose={onClose} timeline={[]} onSend={() => {}} selfId={SELF} />
     );
     userEvent.click(screen.getByLabelText(en.chat_close));
     expect(onClose).toHaveBeenCalled();

@@ -22,7 +22,10 @@ export interface MeetingEvents {
   localStream: (stream: MediaStream | null) => void;
   remoteStream: (peerId: string, stream: MediaStream) => void;
   remoteStreamRemoved: (peerId: string) => void;
-  ended: (reason: 'host-left' | 'self-left' | 'error', detail?: string) => void;
+  ended: (
+    reason: 'host-left' | 'self-left' | 'error' | 'kicked',
+    detail?: string
+  ) => void;
   ready: (selfId: string) => void;
 }
 
@@ -178,6 +181,25 @@ export class MeetingClient {
 
   getSelfId(): string {
     return this.selfId;
+  }
+
+  /**
+   * Host-only: forcibly remove a participant from the meeting.
+   * Sends a `kick` message to the victim, then tears down their connection
+   * (which surfaces a "left" system message via handleClientGone).
+   */
+  kick(peerId: string): void {
+    if (!this.isHost) return;
+    if (peerId === this.selfId) return;
+    const conn = this.dataConns.get(peerId);
+    if (conn) {
+      this.safeSend(conn, { type: 'kick', peerId });
+      try {
+        conn.close();
+      } catch {}
+    }
+    // Ensure roster/media cleanup runs even if the close event is delayed.
+    this.handleClientGone(peerId);
   }
 
   // ---- Host ----
@@ -463,6 +485,10 @@ export class MeetingClient {
         break;
       case 'end':
         this.emit('ended', 'host-left');
+        this.shutdown();
+        break;
+      case 'kick':
+        this.emit('ended', 'kicked');
         this.shutdown();
         break;
       default:

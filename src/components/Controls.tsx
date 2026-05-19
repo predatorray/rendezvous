@@ -6,6 +6,7 @@ import VideocamOffIcon from '@mui/icons-material/VideocamOff';
 import ChatIcon from '@mui/icons-material/Chat';
 import IosShareIcon from '@mui/icons-material/IosShare';
 import CallEndIcon from '@mui/icons-material/CallEnd';
+import PeopleIcon from '@mui/icons-material/People';
 import { useT } from '../i18n/useLangContext';
 
 interface Props {
@@ -16,6 +17,8 @@ interface Props {
   onToggleChat: () => void;
   onShare: () => void;
   onLeave: () => void;
+  onToggleParticipants: () => void;
+  participantCount: number;
   unreadCount: number;
   isSpeaking?: boolean;
 }
@@ -88,6 +91,8 @@ export default function Controls({
   onToggleChat,
   onShare,
   onLeave,
+  onToggleParticipants,
+  participantCount,
   unreadCount,
   isSpeaking,
 }: Props) {
@@ -123,6 +128,37 @@ export default function Controls({
           onClick={onToggleVideo}
         >
           {videoEnabled ? <VideocamIcon /> : <VideocamOffIcon />}
+        </PillButton>
+        <PillButton
+          label={t.controls_participants}
+          active={true}
+          onClick={onToggleParticipants}
+        >
+          <Box sx={{ position: 'relative' }}>
+            <PeopleIcon />
+            {participantCount > 0 && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: -6,
+                  right: -8,
+                  minWidth: 16,
+                  height: 16,
+                  borderRadius: 8,
+                  bgcolor: 'rgba(0,0,0,0.6)',
+                  color: '#fff',
+                  fontSize: 10,
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  px: 0.5,
+                }}
+              >
+                {participantCount > 99 ? '99+' : participantCount}
+              </Box>
+            )}
+          </Box>
         </PillButton>
         <PillButton label={t.controls_chat} active={true} onClick={onToggleChat}>
           <Box sx={{ position: 'relative' }}>

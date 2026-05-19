@@ -38,6 +38,7 @@ const en = {
 
   meeting_ended_host: 'The host ended the meeting',
   meeting_ended_self: 'You left the meeting',
+  meeting_ended_kicked: 'You were removed from the meeting by the host',
 
   meeting_share_invite_aria: 'Share invite',
   meeting_person: 'person',
@@ -67,7 +68,19 @@ const en = {
   controls_start_video: 'Start video',
   controls_chat: 'Chat',
   controls_share: 'Share invite',
+  controls_participants: 'Participants',
   controls_leave: 'Leave',
+
+  participants_title: 'Participants',
+  participants_close: 'Close participants',
+  participants_host: 'Host',
+  participants_you: 'You',
+  participants_kick: 'Remove from meeting',
+  participants_kick_confirm_title: 'Remove participant?',
+  participants_kick_confirm_body: (name: string) =>
+    `${name} will be removed from this meeting.`,
+  participants_kick_confirm: 'Remove',
+  participants_system_kicked: (name: string) => `${name} was removed`,
 
   share_title: 'Invite others',
   share_meeting_code: 'Meeting code',

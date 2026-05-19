@@ -47,4 +47,5 @@ export type WireMessage =
   | { type: 'chat-send'; text: string } // client -> host
   | { type: 'timeline'; item: TimelineItem } // host -> all
   | { type: 'state'; audio: boolean; video: boolean } // client -> host
+  | { type: 'kick'; peerId: string } // host -> victim
   | { type: 'end' };

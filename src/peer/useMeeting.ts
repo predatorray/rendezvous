@@ -19,7 +19,7 @@ export type MeetingPhase =
 export interface UseMeetingState {
   phase: MeetingPhase;
   errorMessage: string | null;
-  endedReason: 'host-left' | 'self-left' | null;
+  endedReason: 'host-left' | 'self-left' | 'kicked' | null;
   selfId: string;
   members: Member[];
   timeline: TimelineItem[];
@@ -31,6 +31,7 @@ export interface UseMeetingState {
   toggleAudio: () => void;
   toggleVideo: () => void;
   leave: () => void;
+  kick: (peerId: string) => void;
 }
 
 async function tryGetUserMedia(): Promise<MediaStream | null> {
@@ -61,7 +62,7 @@ export function useMeeting({
   const [phase, setPhase] = useState<MeetingPhase>('preparing');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [endedReason, setEndedReason] = useState<
-    'host-left' | 'self-left' | null
+    'host-left' | 'self-left' | 'kicked' | null
   >(null);
   const [selfId, setSelfId] = useState('');
   const [members, setMembers] = useState<Member[]>([]);
@@ -204,6 +205,10 @@ export function useMeeting({
     clientRef.current?.leave();
   }, []);
 
+  const kick = useCallback((peerId: string) => {
+    clientRef.current?.kick(peerId);
+  }, []);
+
   return {
     phase,
     errorMessage,
@@ -219,5 +224,6 @@ export function useMeeting({
     toggleAudio,
     toggleVideo,
     leave,
+    kick,
   };
 }

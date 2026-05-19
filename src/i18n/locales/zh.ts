@@ -37,6 +37,7 @@ const zh = {
 
   meeting_ended_host: '主持人已结束会议',
   meeting_ended_self: '你已离开会议',
+  meeting_ended_kicked: '你已被主持人移出会议',
 
   meeting_share_invite_aria: '分享邀请',
   meeting_person: '人',
@@ -65,7 +66,18 @@ const zh = {
   controls_start_video: '开启视频',
   controls_chat: '聊天',
   controls_share: '分享邀请',
+  controls_participants: '参会者',
   controls_leave: '离开',
+
+  participants_title: '参会者',
+  participants_close: '关闭参会者列表',
+  participants_host: '主持人',
+  participants_you: '你',
+  participants_kick: '移出会议',
+  participants_kick_confirm_title: '移出参会者？',
+  participants_kick_confirm_body: (name: string) => `${name} 将被移出此会议。`,
+  participants_kick_confirm: '移出',
+  participants_system_kicked: (name: string) => `${name} 已被移出会议`,
 
   share_title: '邀请他人',
   share_meeting_code: '会议代码',

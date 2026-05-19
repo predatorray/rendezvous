@@ -332,6 +332,89 @@ describe('MeetingClient', () => {
     expect(getPeerInstances()).toHaveLength(1);
   });
 
+  it('host: kick() sends a kick message to the victim and removes them from the roster', async () => {
+    const timeline = jest.fn();
+    const members = jest.fn();
+    const { client, peer } = await startHost();
+
+    const dc = new FakeDataConnection('rendezvous-abcdef-guest1');
+    peer.fakeIncomingConnection(dc);
+    dc.fakeOpen();
+    dc.fakeData({ type: 'hello', name: 'Alice' });
+
+    client.on('timeline', timeline);
+    client.on('members', members);
+    dc.sent.length = 0;
+    timeline.mockClear();
+
+    client.kick('rendezvous-abcdef-guest1');
+
+    // Victim got the kick message.
+    expect(
+      dc.sent.find((m) => m.type === 'kick' && m.peerId === 'rendezvous-abcdef-guest1')
+    ).toBeTruthy();
+    // Member is removed and a "left" system message is emitted.
+    const leftSys = timeline.mock.calls
+      .map((c) => c[0])
+      .find((m) => m.event?.kind === 'left');
+    expect(leftSys).toBeDefined();
+    expect(leftSys.event.name).toBe('Alice');
+    // Roster no longer contains Alice.
+    const latestMembers = members.mock.calls.at(-1)![0];
+    expect(latestMembers.some((m: any) => m.name === 'Alice')).toBe(false);
+  });
+
+  it('host: kick() is a no-op when targeting self', async () => {
+    const { client, peer } = await startHost();
+    const dc = new FakeDataConnection('rendezvous-abcdef-guest1');
+    peer.fakeIncomingConnection(dc);
+    dc.fakeOpen();
+    dc.fakeData({ type: 'hello', name: 'Alice' });
+    dc.sent.length = 0;
+
+    client.kick(client.getSelfId());
+
+    expect(dc.sent.some((m) => m.type === 'kick')).toBe(false);
+  });
+
+  it('host: kick() ignores unknown peer ids', async () => {
+    const timeline = jest.fn();
+    const { client } = await startHost();
+    client.on('timeline', timeline);
+
+    client.kick('does-not-exist');
+
+    // No "left" system message should have been generated.
+    const leftSys = timeline.mock.calls
+      .map((c) => c[0])
+      .find((m) => m?.event?.kind === 'left');
+    expect(leftSys).toBeUndefined();
+  });
+
+  it('client: kick() is a no-op (only the host may evict peers)', async () => {
+    const { client, peer } = await startClient();
+    const dc = peer.outgoingConnects[0];
+    dc.fakeOpen();
+    dc.sent.length = 0;
+
+    client.kick('rendezvous-abcdef');
+
+    expect(dc.sent.some((m) => m.type === 'kick')).toBe(false);
+  });
+
+  it('client: receiving a kick from host triggers ended with reason "kicked"', async () => {
+    const ended = jest.fn();
+    const { client, peer } = await startClient();
+    client.on('ended', ended);
+    const dc = peer.outgoingConnects[0];
+    dc.fakeOpen();
+
+    dc.fakeData({ type: 'kick', peerId: peer.id });
+
+    expect(ended).toHaveBeenCalledWith('kicked');
+    expect(peer.destroyed).toBe(true);
+  });
+
   it('FakePeer is the mocked Peer constructor', () => {
     // Sanity: ensure peerjs mock is wired up.
     // eslint-disable-next-line @typescript-eslint/no-var-requires

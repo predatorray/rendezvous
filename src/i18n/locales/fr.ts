@@ -38,6 +38,7 @@ const fr = {
 
   meeting_ended_host: 'L’hôte a mis fin à la réunion',
   meeting_ended_self: 'Vous avez quitté la réunion',
+  meeting_ended_kicked: 'Vous avez été retiré de la réunion par l’hôte',
 
   meeting_share_invite_aria: 'Partager l’invitation',
   meeting_person: 'personne',
@@ -67,7 +68,19 @@ const fr = {
   controls_start_video: 'Activer la vidéo',
   controls_chat: 'Discussion',
   controls_share: 'Partager l’invitation',
+  controls_participants: 'Participants',
   controls_leave: 'Quitter',
+
+  participants_title: 'Participants',
+  participants_close: 'Fermer la liste des participants',
+  participants_host: 'Hôte',
+  participants_you: 'Vous',
+  participants_kick: 'Retirer de la réunion',
+  participants_kick_confirm_title: 'Retirer le participant ?',
+  participants_kick_confirm_body: (name: string) =>
+    `${name} sera retiré de cette réunion.`,
+  participants_kick_confirm: 'Retirer',
+  participants_system_kicked: (name: string) => `${name} a été retiré`,
 
   share_title: 'Inviter d’autres personnes',
   share_meeting_code: 'Code de la réunion',
