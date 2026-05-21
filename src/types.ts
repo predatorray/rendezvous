@@ -4,6 +4,9 @@ export interface Member {
   audio: boolean;
   video: boolean;
   isHost: boolean;
+  // Demo-only: a still image used in place of a live video stream so the
+  // shared meeting UI can be rendered without WebRTC. Ignored in real meetings.
+  imageSrc?: string;
 }
 
 export interface ChatMessage {

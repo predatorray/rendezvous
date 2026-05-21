@@ -44,6 +44,9 @@ export default function VideoTile({ member, stream, isSelf, compact }: Props) {
   }, [stream, member.video]);
 
   const showVideo = member.video && !!stream;
+  // Fall back to a still image (demo mode) when the member has video on but no
+  // live stream is available.
+  const showImage = !showVideo && member.video && !!member.imageSrc;
 
   return (
     <Box
@@ -68,6 +71,19 @@ export default function VideoTile({ member, stream, isSelf, compact }: Props) {
             height: '100%',
             objectFit: 'cover',
             transform: isSelf ? 'scaleX(-1)' : undefined,
+          }}
+        />
+      ) : showImage ? (
+        <Box
+          component="img"
+          src={member.imageSrc}
+          alt={member.name}
+          draggable={false}
+          sx={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            userSelect: 'none',
           }}
         />
       ) : (
