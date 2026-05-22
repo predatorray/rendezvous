@@ -19,7 +19,10 @@
 
 👉 **Try it online: <https://predatorray.github.io/rendezvous/>**
 
-![Meeting Screenshot](https://raw.githubusercontent.com/predatorray/rendezvous/assets/screenshot-meeting.png)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/predatorray/rendezvous/assets/screenshot-meeting.png" height="240" alt="Meeting Screenshot"/>
+  <img src="https://raw.githubusercontent.com/predatorray/rendezvous/assets/screenshot-meeting-mobile.png" height="240" alt="Meeting Screenshot on Mobile" />
+</p>
 
 There is no application server — the **host** of each meeting acts as a
 relay hub for chat messages and media streams, so each participant only
