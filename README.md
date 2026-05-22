@@ -149,6 +149,13 @@ flowchart LR
   limited to what `getUserMedia` and the browser’s WebRTC stack negotiate.
 - Default PeerJS broker is used; for production you can host your own
   PeerServer and pass it to the `Peer` constructor.
+- The "serverless" property only holds when every participant can establish
+  a direct peer-to-peer connection (host candidates, or server-reflexive
+  candidates obtained via STUN for endpoints behind cone NATs). If any
+  participant sits behind a symmetric NAT, ICE cannot negotiate a direct
+  path, and media/data are relayed through a TURN server — meaning that
+  traffic is proxied by a third-party server rather than flowing directly
+  between peers.
 
 [1]: https://github.com/predatorray/rendezvous/blob/main/LICENSE
 [2]: https://github.com/predatorray/rendezvous/actions/workflows/ci.yml
