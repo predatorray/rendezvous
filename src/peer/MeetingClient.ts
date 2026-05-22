@@ -32,6 +32,39 @@ export interface MeetingEvents {
 type EventName = keyof MeetingEvents;
 type Listener<K extends EventName> = MeetingEvents[K];
 
+/**
+ * metered.ca TURN/STUN credentials endpoint. The API key is injected at build
+ * time from the REACT_APP_METERED_API_KEY env var (set by the GitHub publish
+ * workflow). Since this is a fully serverless / backend-less app, the key is
+ * inlined into the client bundle as plaintext — that is expected and accepted.
+ */
+const METERED_CREDENTIALS_URL =
+  'https://predatorray.metered.live/api/v1/turn/credentials';
+const METERED_API_KEY = process.env.REACT_APP_METERED_API_KEY;
+
+/**
+ * Fetches ICE servers from metered.ca for production builds only. Unit tests
+ * (NODE_ENV=test) and e2e tests (CRA dev server, NODE_ENV=development) fall
+ * back to PeerJS's built-in default ICE servers by returning null.
+ */
+async function fetchIceServers(): Promise<RTCIceServer[] | null> {
+  if (process.env.NODE_ENV !== 'production' || !METERED_API_KEY) {
+    return null;
+  }
+  try {
+    const response = await fetch(
+      `${METERED_CREDENTIALS_URL}?apiKey=${METERED_API_KEY}`
+    );
+    if (!response.ok) {
+      throw new Error(`metered.ca responded with ${response.status}`);
+    }
+    return (await response.json()) as RTCIceServer[];
+  } catch (e) {
+    console.error('Failed to fetch ICE servers from metered.ca', e);
+    return null;
+  }
+}
+
 interface ConstructorArgs {
   code: string;
   name: string;
@@ -111,7 +144,11 @@ export class MeetingClient {
     this.videoEnabled = stream?.getVideoTracks()[0]?.enabled ?? false;
 
     const peerId = this.isHost ? this.hostId : randomClientPeerId(this.code);
-    this.peer = new Peer(peerId, { debug: 1 });
+    const iceServers = await fetchIceServers();
+    this.peer = new Peer(peerId, {
+      debug: 1,
+      ...(iceServers ? { config: { iceServers } } : {}),
+    });
 
     await new Promise<void>((resolve, reject) => {
       const peer = this.peer!;
