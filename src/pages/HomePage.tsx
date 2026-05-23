@@ -5,14 +5,19 @@ import {
   Container,
   Divider,
   Stack,
+  Switch,
   TextField,
+  Tooltip,
   Typography,
   Paper,
   Alert,
+  CircularProgress,
+  FormControlLabel,
   Link,
 } from '@mui/material';
 import VideocamIcon from '@mui/icons-material/Videocam';
 import LoginIcon from '@mui/icons-material/Login';
+import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import { useNavigate } from 'react-router-dom';
 import ThemeToggle from '../components/ThemeToggle';
 import {
@@ -21,6 +26,15 @@ import {
   normalizeMeetingCode,
 } from '../util/code';
 import { getStoredName, setStoredName } from '../util/storage';
+import {
+  getOrCreateHostIdentity,
+  webAuthnAvailable,
+} from '../peer/hostIdentity';
+import {
+  isVerifiedFeatureEnabled,
+  setVerifiedFeatureEnabled,
+  verifiedKeyParams,
+} from '../util/verifiedMeeting';
 import { useT } from '../i18n/useLangContext';
 import LanguageMenu from '../i18n/LanguageMenu';
 
@@ -33,10 +47,14 @@ export default function HomePage() {
   const [code, setCode] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [nameTouched, setNameTouched] = useState(false);
+  const [verifiedEnabled, setVerifiedEnabled] = useState(false);
+  const [busy, setBusy] = useState(false);
   const nameInputRef = useRef<HTMLInputElement>(null);
+  const passkeysAvailable = webAuthnAvailable();
 
   useEffect(() => {
     setName(getStoredName());
+    setVerifiedEnabled(isVerifiedFeatureEnabled());
   }, []);
 
   const trimmedName = name.trim();
@@ -51,22 +69,52 @@ export default function HomePage() {
     nameInputRef.current?.focus();
   };
 
-  const proceed = (mode: Mode, meetingCode: string) => {
+  const proceed = (
+    mode: Mode,
+    meetingCode: string,
+    extra?: Record<string, string>
+  ) => {
     setStoredName(trimmedName);
     const search = new URLSearchParams();
     search.set('name', trimmedName);
     if (mode === 'host') search.set('host', '1');
+    if (extra) {
+      for (const [k, v] of Object.entries(extra)) search.set(k, v);
+    }
     navigate(`/m/${meetingCode}?${search.toString()}`);
   };
 
-  const handleHost = () => {
+  const toggleVerified = (enabled: boolean) => {
+    setVerifiedEnabled(enabled);
+    setVerifiedFeatureEnabled(enabled);
+  };
+
+  const handleHost = async () => {
     setError(null);
     if (!hasName) {
       setError(t.home_error_name);
       focusName();
       return;
     }
-    proceed('host', generateMeetingCode());
+    if (!verifiedEnabled) {
+      proceed('host', generateMeetingCode());
+      return;
+    }
+    // Verified meeting: mint (or reuse) the host's passkey identity, then carry
+    // its public key in the invite URL so guests can verify the host.
+    setBusy(true);
+    try {
+      const identity = await getOrCreateHostIdentity();
+      proceed(
+        'host',
+        generateMeetingCode(),
+        verifiedKeyParams({ publicKey: identity.publicKey, alg: identity.alg })
+      );
+    } catch (e: any) {
+      setError(e?.message ?? t.verify_create_failed);
+    } finally {
+      setBusy(false);
+    }
   };
 
   const handleJoin = () => {
@@ -186,12 +234,71 @@ export default function HomePage() {
                 <Button
                   variant="contained"
                   size="large"
-                  startIcon={<VideocamIcon />}
+                  startIcon={
+                    busy ? (
+                      <CircularProgress size={18} color="inherit" />
+                    ) : verifiedEnabled ? (
+                      <VerifiedUserIcon />
+                    ) : (
+                      <VideocamIcon />
+                    )
+                  }
                   onClick={handleHost}
+                  disabled={busy}
                   sx={{ py: 1.5, textTransform: 'none', fontWeight: 500 }}
                 >
-                  {t.home_host}
+                  {verifiedEnabled ? t.verify_host_button : t.home_host}
                 </Button>
+
+                <Box sx={{ mt: -1 }}>
+                  <Tooltip
+                    title={passkeysAvailable ? '' : t.verify_unsupported}
+                    placement="top"
+                  >
+                    <FormControlLabel
+                      sx={{ ml: 0.25, alignItems: 'flex-start' }}
+                      control={
+                        <Switch
+                          size="small"
+                          checked={verifiedEnabled}
+                          disabled={!passkeysAvailable}
+                          onChange={(e) => toggleVerified(e.target.checked)}
+                          inputProps={{ 'aria-label': t.verify_toggle_label }}
+                        />
+                      }
+                      label={
+                        <Box sx={{ pt: 0.25 }}>
+                          <Stack
+                            direction="row"
+                            spacing={0.5}
+                            alignItems="center"
+                          >
+                            <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                              {t.verify_toggle_label}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                px: 0.5,
+                                borderRadius: 0.5,
+                                bgcolor: 'action.selected',
+                                opacity: 0.8,
+                              }}
+                            >
+                              {t.verify_experimental_tag}
+                            </Typography>
+                          </Stack>
+                          <Typography
+                            variant="caption"
+                            sx={{ opacity: 0.6, display: 'block' }}
+                          >
+                            {t.verify_toggle_hint}
+                          </Typography>
+                        </Box>
+                      }
+                    />
+                  </Tooltip>
+                </Box>
 
                 <Divider sx={{ opacity: 0.4 }}>{t.home_or_join}</Divider>
 

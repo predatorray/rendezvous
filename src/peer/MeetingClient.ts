@@ -1,5 +1,6 @@
 import Peer, { DataConnection, MediaConnection } from 'peerjs';
 import {
+  AuthResponsePayload,
   ChatMessage,
   Member,
   SystemMessage,
@@ -11,6 +12,15 @@ import {
   peerIdForMeeting,
   randomClientPeerId,
 } from '../util/code';
+import { HostSession, freshNonce, verifyAuthResponse } from './verification';
+
+/**
+ * Verified-meeting configuration (experimental). Absent for ordinary meetings,
+ * in which case the client behaves exactly as it always has.
+ */
+export type VerificationConfig =
+  | { role: 'host'; session: HostSession }
+  | { role: 'guest'; expectedFingerprint: string };
 
 /**
  * Event payloads for subscribers.
@@ -27,6 +37,10 @@ export interface MeetingEvents {
     detail?: string
   ) => void;
   ready: (selfId: string) => void;
+  // Verified meeting (experimental) lifecycle, guest side only.
+  waiting: () => void; // host not present yet; waiting room
+  verifying: () => void; // connected, checking host identity
+  verified: (fingerprint: string) => void; // host identity confirmed
 }
 
 type EventName = keyof MeetingEvents;
@@ -69,6 +83,7 @@ interface ConstructorArgs {
   code: string;
   name: string;
   isHost: boolean;
+  verification?: VerificationConfig;
 }
 
 interface MetadataPayload {
@@ -99,15 +114,24 @@ export class MeetingClient {
   // Client-only state.
   private hostDataConn: DataConnection | null = null;
 
+  // Verified meeting (experimental) state.
+  private verification?: VerificationConfig;
+  private clientConnected = false; // data conn to host is open
+  private waitingForHost = false;
+  private authNonce: string | null = null;
+  private authTimer: ReturnType<typeof setTimeout> | null = null;
+  private retryTimer: ReturnType<typeof setTimeout> | null = null;
+
   // Tracks remote streams by logical peer id for both host and client.
   private remoteStreams = new Map<string, MediaStream>();
 
   private listeners: { [K in EventName]?: Set<Listener<K>> } = {};
 
-  constructor({ code, name, isHost }: ConstructorArgs) {
+  constructor({ code, name, isHost, verification }: ConstructorArgs) {
     this.code = code;
     this.name = name;
     this.isHost = isHost;
+    this.verification = verification;
     this.hostId = peerIdForMeeting(code);
   }
 
@@ -280,6 +304,10 @@ export class MeetingClient {
 
   private handleMessageFromClient(conn: DataConnection, msg: WireMessage): void {
     switch (msg.type) {
+      case 'auth-challenge': {
+        this.respondToAuthChallenge(conn, msg.nonce);
+        break;
+      }
       case 'hello': {
         const member: Member = {
           id: conn.peer,
@@ -338,6 +366,24 @@ export class MeetingClient {
         // ignore
         break;
     }
+  }
+
+  private respondToAuthChallenge(conn: DataConnection, nonce: string): void {
+    const v = this.verification;
+    if (!v || v.role !== 'host') {
+      // We are not a verified host — tell the guest so it can bail fast.
+      this.safeSend(conn, { type: 'auth-unavailable' });
+      return;
+    }
+    v.session
+      .signFor(nonce)
+      .then((payload) =>
+        this.safeSend(conn, { type: 'auth-response', payload })
+      )
+      .catch((e) => {
+        console.error('failed to sign auth challenge', e);
+        this.safeSend(conn, { type: 'auth-unavailable' });
+      });
   }
 
   private handleClientGone(peerId: string): void {
@@ -463,39 +509,57 @@ export class MeetingClient {
 
   // ---- Client ----
 
+  private isVerifiedGuest(): boolean {
+    return this.verification?.role === 'guest';
+  }
+
   private startAsClient(): void {
     const peer = this.peer!;
     // Accept incoming calls from host (they carry other peers' streams).
     peer.on('call', (call) => this.handleIncomingCallAsClient(call));
     peer.on('error', (err) => {
-      console.error('Client peer error', err);
-      // PeerJS surfaces peer-unavailable when host id doesn't exist.
+      // PeerJS surfaces peer-unavailable when the host id isn't registered.
       if ((err as any).type === 'peer-unavailable') {
+        // Verified meetings show a waiting room and keep retrying until the
+        // host appears; ordinary meetings keep the original behavior.
+        if (this.isVerifiedGuest() && !this.clientConnected) {
+          this.enterWaiting();
+          return;
+        }
         this.emit('ended', 'error', 'Meeting not found.');
         this.shutdown();
+        return;
       }
+      console.error('Client peer error', err);
     });
 
+    this.connectToHost();
+  }
+
+  private connectToHost(): void {
+    const peer = this.peer;
+    if (!peer) return;
+    // Drop any dead connection from a previous (failed) waiting-room attempt.
+    if (this.hostDataConn) {
+      try {
+        this.hostDataConn.close();
+      } catch {}
+    }
     const dc = peer.connect(this.hostId, { reliable: true });
     this.hostDataConn = dc;
     dc.on('open', () => {
-      this.safeSend(dc, { type: 'hello', name: this.name });
-      this.publishOwnState();
-      // Place a call to host with our stream so host can relay it.
-      if (this.localStream && this.peer) {
-        const meta: MetadataPayload = { peerId: this.selfId };
-        const outgoing = this.peer.call(this.hostId, this.localStream, {
-          metadata: meta,
-        });
-        outgoing?.on('stream', (incoming) => {
-          // This is host's own stream.
-          this.remoteStreams.set(this.hostId, incoming);
-          this.emit('remoteStream', this.hostId, incoming);
-        });
+      this.clientConnected = true;
+      this.waitingForHost = false;
+      if (this.retryTimer) {
+        clearTimeout(this.retryTimer);
+        this.retryTimer = null;
       }
+      this.onHostConnectionOpen(dc);
     });
     dc.on('data', (raw) => this.handleMessageFromHost(raw as WireMessage));
     dc.on('close', () => {
+      // Ignore stale connections abandoned while retrying in the waiting room.
+      if (!this.clientConnected) return;
       this.emit('ended', 'host-left');
       this.shutdown();
     });
@@ -504,8 +568,103 @@ export class MeetingClient {
     });
   }
 
+  private enterWaiting(): void {
+    if (!this.waitingForHost) {
+      this.waitingForHost = true;
+      this.emit('waiting');
+    }
+    if (this.retryTimer) clearTimeout(this.retryTimer);
+    this.retryTimer = setTimeout(() => {
+      if (this.peer) this.connectToHost();
+    }, 2500);
+  }
+
+  private onHostConnectionOpen(dc: DataConnection): void {
+    if (this.isVerifiedGuest()) {
+      // Verify the host's identity before revealing our name, state or media.
+      this.authNonce = freshNonce();
+      this.emit('verifying');
+      this.safeSend(dc, { type: 'auth-challenge', nonce: this.authNonce });
+      if (this.authTimer) clearTimeout(this.authTimer);
+      this.authTimer = setTimeout(
+        () => this.failVerification('verify-timeout'),
+        15000
+      );
+      return;
+    }
+    this.joinHost(dc);
+  }
+
+  // Sends hello, publishes state and offers our stream. Runs only once the
+  // host is trusted: immediately for ordinary meetings, after a successful
+  // identity check for verified ones.
+  private joinHost(dc: DataConnection): void {
+    this.safeSend(dc, { type: 'hello', name: this.name });
+    this.publishOwnState();
+    // Place a call to host with our stream so host can relay it.
+    if (this.localStream && this.peer) {
+      const meta: MetadataPayload = { peerId: this.selfId };
+      const outgoing = this.peer.call(this.hostId, this.localStream, {
+        metadata: meta,
+      });
+      outgoing?.on('stream', (incoming) => {
+        // This is host's own stream.
+        this.remoteStreams.set(this.hostId, incoming);
+        this.emit('remoteStream', this.hostId, incoming);
+      });
+    }
+  }
+
+  private failVerification(reasonCode: string): void {
+    if (this.authTimer) {
+      clearTimeout(this.authTimer);
+      this.authTimer = null;
+    }
+    this.emit('ended', 'error', reasonCode);
+    this.shutdown();
+  }
+
+  private handleAuthResponse(payload: AuthResponsePayload): void {
+    const v = this.verification;
+    if (!v || v.role !== 'guest' || !this.authNonce) return;
+    const nonce = this.authNonce;
+    verifyAuthResponse({
+      payload,
+      expectedFingerprint: v.expectedFingerprint,
+      code: this.code,
+      nonce,
+      origin: window.location.origin,
+      rpId: window.location.hostname,
+    })
+      .then((result) => {
+        if (this.authTimer) {
+          clearTimeout(this.authTimer);
+          this.authTimer = null;
+        }
+        if (!result.ok) {
+          console.warn('host verification failed:', result.reason);
+          this.failVerification('verify-failed');
+          return;
+        }
+        this.emit('verified', result.fingerprint);
+        const dc = this.hostDataConn;
+        if (dc && dc.open) this.joinHost(dc);
+      })
+      .catch(() => this.failVerification('verify-failed'));
+  }
+
   private handleMessageFromHost(msg: WireMessage): void {
     switch (msg.type) {
+      case 'auth-response': {
+        this.handleAuthResponse(msg.payload);
+        break;
+      }
+      case 'auth-unavailable': {
+        // The peer answering for this meeting is not running verification —
+        // either a misconfigured host or an impostor squatting the id.
+        this.failVerification('verify-unavailable');
+        break;
+      }
       case 'welcome': {
         // Track host id (it might differ from the static derived one in edge
         // cases; trust what host says).
@@ -572,6 +731,14 @@ export class MeetingClient {
   // ---- Teardown ----
 
   private shutdown(): void {
+    if (this.retryTimer) {
+      clearTimeout(this.retryTimer);
+      this.retryTimer = null;
+    }
+    if (this.authTimer) {
+      clearTimeout(this.authTimer);
+      this.authTimer = null;
+    }
     try {
       this.peer?.destroy();
     } catch {}

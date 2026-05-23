@@ -108,6 +108,53 @@ const en = {
   theme_light: 'light',
 
   language_change: 'Change language',
+
+  // Verified meeting (experimental)
+  verify_toggle_label: 'Verified meeting',
+  verify_experimental_tag: 'Experimental',
+  verify_toggle_hint:
+    'Guests cryptographically verify it is really you hosting, using a passkey.',
+  verify_unsupported: 'Passkeys are not supported in this browser.',
+  verify_host_button: 'Host verified meeting',
+  verify_create_failed: 'Could not create your passkey identity.',
+
+  verify_host_unlock_title: 'Unlock to host',
+  verify_host_unlock_body:
+    'Confirm with your passkey so guests can verify this meeting is really hosted by you.',
+  verify_host_unlock_cta: 'Verify with passkey',
+  verify_host_unlocking: 'Waiting for passkey…',
+  verify_host_unlock_failed: 'Passkey verification failed.',
+
+  verify_waiting_title: 'Waiting for the host',
+  verify_waiting_body:
+    'This meeting hasn’t started yet. You’ll join automatically once the host arrives.',
+  verify_checking: 'Verifying host identity…',
+
+  verify_badge_host: 'Verified host',
+  verify_badge_verified: 'Verified',
+  verify_badge_pending: 'Verifying…',
+
+  verify_error_timeout: 'The host did not respond to the identity check.',
+  verify_error_unavailable:
+    'This meeting could not be verified. The host isn’t running verification, or someone may be impersonating them.',
+  verify_error_failed:
+    'Host identity could not be verified. Do not share anything sensitive — you may not be talking to the real host.',
+
+  share_fingerprint_label: 'Host fingerprint',
+  share_copy_fingerprint: 'Copy fingerprint',
+  share_fingerprint_hint:
+    'Share this fingerprint over a separate channel (in person, a call). Guests can compare it to confirm there’s no impostor.',
+
+  verify_identity_view: 'View host identity',
+  verify_identity_title: 'Host identity',
+  verify_identity_body_host:
+    'This is your meeting’s fingerprint. Guests who were given it can confirm they reached you.',
+  verify_identity_status_verified:
+    'This host’s identity has been cryptographically verified.',
+  verify_identity_status_pending:
+    'Verifying the host’s identity…',
+  verify_identity_compare_hint:
+    'Compare this with the fingerprint the host gave you separately (in person, a call, a signed message). If they don’t match, the link may have been tampered with — don’t trust the meeting.',
 } as const;
 
 export default en;

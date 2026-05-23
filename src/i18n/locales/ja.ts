@@ -108,6 +108,51 @@ const ja = {
   theme_light: 'ライト',
 
   language_change: '言語を変更',
+
+  // 検証済みミーティング（実験的）
+  verify_toggle_label: '検証済みミーティング',
+  verify_experimental_tag: '実験的',
+  verify_toggle_hint:
+    'ゲストはパスキーを使って、本当にあなたが主催していることを暗号的に検証します。',
+  verify_unsupported: 'このブラウザはパスキーに対応していません。',
+  verify_host_button: '検証済みミーティングを主催',
+  verify_create_failed: 'パスキーIDを作成できませんでした。',
+
+  verify_host_unlock_title: '主催するにはロック解除',
+  verify_host_unlock_body:
+    'パスキーで確認すると、ゲストはこのミーティングを本当にあなたが主催していることを検証できます。',
+  verify_host_unlock_cta: 'パスキーで確認',
+  verify_host_unlocking: 'パスキーを待っています…',
+  verify_host_unlock_failed: 'パスキーの検証に失敗しました。',
+
+  verify_waiting_title: 'ホストを待っています',
+  verify_waiting_body:
+    'このミーティングはまだ開始されていません。ホストが参加すると自動的に参加します。',
+  verify_checking: 'ホストの本人確認中…',
+
+  verify_badge_host: '検証済みホスト',
+  verify_badge_verified: '検証済み',
+  verify_badge_pending: '検証中…',
+
+  verify_error_timeout: 'ホストが本人確認に応答しませんでした。',
+  verify_error_unavailable:
+    'このミーティングを検証できませんでした。ホストが検証を有効にしていないか、誰かがなりすましている可能性があります。',
+  verify_error_failed:
+    'ホストの本人確認ができませんでした。機密情報は共有しないでください。本物のホストと話していない可能性があります。',
+
+  share_fingerprint_label: 'ホストのフィンガープリント',
+  share_copy_fingerprint: 'フィンガープリントをコピー',
+  share_fingerprint_hint:
+    'このフィンガープリントを別の手段（対面・通話）で共有してください。ゲストは照合してなりすましがないことを確認できます。',
+
+  verify_identity_view: 'ホストの身元を表示',
+  verify_identity_title: 'ホストの身元',
+  verify_identity_body_host:
+    'これはこのミーティングのフィンガープリントです。これを伝えたゲストは、本当にあなたに接続できたことを確認できます。',
+  verify_identity_status_verified: 'このホストの身元は暗号的に検証されました。',
+  verify_identity_status_pending: 'ホストの身元を検証中…',
+  verify_identity_compare_hint:
+    'ホストから別の手段（対面・通話・署名付きメッセージ）で伝えられたフィンガープリントと照合してください。一致しない場合、リンクが改ざんされている可能性があります。そのミーティングを信用しないでください。',
 } as const;
 
 export default ja;

@@ -105,6 +105,46 @@ const zh = {
   theme_light: '浅色',
 
   language_change: '切换语言',
+
+  // 已验证会议（实验性）
+  verify_toggle_label: '已验证会议',
+  verify_experimental_tag: '实验性',
+  verify_toggle_hint: '访客通过通行密钥以加密方式验证确实是你在主持。',
+  verify_unsupported: '此浏览器不支持通行密钥。',
+  verify_host_button: '主持已验证会议',
+  verify_create_failed: '无法创建你的通行密钥身份。',
+
+  verify_host_unlock_title: '解锁以主持',
+  verify_host_unlock_body: '用你的通行密钥确认，以便访客能验证这场会议确实由你主持。',
+  verify_host_unlock_cta: '用通行密钥验证',
+  verify_host_unlocking: '正在等待通行密钥…',
+  verify_host_unlock_failed: '通行密钥验证失败。',
+
+  verify_waiting_title: '正在等待主持人',
+  verify_waiting_body: '会议尚未开始。主持人到场后你将自动加入。',
+  verify_checking: '正在验证主持人身份…',
+
+  verify_badge_host: '已验证主持人',
+  verify_badge_verified: '已验证',
+  verify_badge_pending: '验证中…',
+
+  verify_error_timeout: '主持人未响应身份验证。',
+  verify_error_unavailable: '无法验证此会议。主持人未启用验证，或有人可能在冒充主持人。',
+  verify_error_failed:
+    '无法验证主持人身份。请勿分享任何敏感信息——你可能并非在与真正的主持人通话。',
+
+  share_fingerprint_label: '主持人指纹',
+  share_copy_fingerprint: '复制指纹',
+  share_fingerprint_hint:
+    '请通过另一渠道（当面、电话）分享此指纹。访客可对照确认没有冒充者。',
+
+  verify_identity_view: '查看主持人身份',
+  verify_identity_title: '主持人身份',
+  verify_identity_body_host: '这是本次会议的指纹。收到它的访客可据此确认确实联系到了你。',
+  verify_identity_status_verified: '该主持人的身份已通过加密验证。',
+  verify_identity_status_pending: '正在验证主持人身份…',
+  verify_identity_compare_hint:
+    '请将此指纹与主持人通过其他方式（当面、电话、已签名的消息）告知你的指纹进行对照。若不一致，链接可能已被篡改——请勿信任该会议。',
 } as const;
 
 export default zh;
