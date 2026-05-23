@@ -59,11 +59,22 @@ A guest verifies three links in the chain (`src/peer/verification.ts`):
 Only if all three hold does the guest send its name / state / media. Otherwise
 it shows an error and refuses to join.
 
-## Waiting room
+## Waiting room & re-hosting
 
 If a guest opens a verified link before the host is present, it shows a
 *waiting for host* screen and retries the connection until the host appears,
-then verifies and joins automatically.
+then verifies and joins automatically. If the connection neither opens nor
+reports `peer-unavailable` (a stale broker registration for a host that just
+left), a connect timeout falls back to the same waiting room and keeps retrying.
+
+The link a host shares is the *guest* link (no `host=1`), so the waiting room
+also offers **“Host this meeting”**: a passkey holder can claim the host role
+for an unhosted meeting. This is what lets a host create a link ahead of time —
+or leave and come back — and still host it instead of being stranded as a
+guest. Claiming runs the same passkey ceremony (`HostSession.create`) against
+the identity pinned in the URL; the self-check rejects a passkey that doesn’t
+match. Re-hosting retries the peer-id claim for a short grace window because the
+public broker doesn’t release a departed host’s id immediately.
 
 ## Cross-device
 

@@ -128,6 +128,8 @@ const en = {
   verify_waiting_title: 'Waiting for the host',
   verify_waiting_body:
     'This meeting hasn’t started yet. You’ll join automatically once the host arrives.',
+  verify_waiting_host_question: 'Are you the host?',
+  verify_waiting_host_cta: 'Host this meeting',
   verify_checking: 'Verifying host identity…',
 
   verify_badge_host: 'Verified host',

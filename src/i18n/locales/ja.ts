@@ -128,6 +128,8 @@ const ja = {
   verify_waiting_title: 'ホストを待っています',
   verify_waiting_body:
     'このミーティングはまだ開始されていません。ホストが参加すると自動的に参加します。',
+  verify_waiting_host_question: 'あなたがホストですか？',
+  verify_waiting_host_cta: 'このミーティングを主催',
   verify_checking: 'ホストの本人確認中…',
 
   verify_badge_host: '検証済みホスト',

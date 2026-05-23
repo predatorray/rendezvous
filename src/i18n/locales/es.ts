@@ -128,6 +128,8 @@ const es = {
   verify_waiting_title: 'Esperando al anfitrión',
   verify_waiting_body:
     'Esta reunión aún no ha empezado. Te unirás automáticamente cuando llegue el anfitrión.',
+  verify_waiting_host_question: '¿Eres el anfitrión?',
+  verify_waiting_host_cta: 'Organizar esta reunión',
   verify_checking: 'Verificando la identidad del anfitrión…',
 
   verify_badge_host: 'Anfitrión verificado',

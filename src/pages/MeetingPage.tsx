@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   CircularProgress,
+  Divider,
   Stack,
   Typography,
 } from '@mui/material';
@@ -38,6 +39,11 @@ export default function MeetingPage() {
 
   const [confirmedName, setConfirmedName] = useState(initialName);
   const [nameDraft, setNameDraft] = useState(initialName);
+  // Set when a verified guest who holds the host passkey takes over hosting an
+  // unhosted meeting (re-hosting a link they created earlier).
+  const [takeoverSession, setTakeoverSession] = useState<HostSession | null>(
+    null
+  );
 
   const normalizedCode = code.trim().toLowerCase();
   const validCode = isValidMeetingCode(normalizedCode);
@@ -114,11 +120,25 @@ export default function MeetingPage() {
 
   // A guest joining a verified link verifies the host's identity automatically.
   if (!isHost && verifiedKey) {
+    // If this guest reclaimed an unhosted meeting with their passkey, run as
+    // the host instead.
+    if (takeoverSession) {
+      return (
+        <LiveMeeting
+          code={normalizedCode}
+          name={confirmedName}
+          isHost
+          verification={{ role: 'host', session: takeoverSession }}
+          verifiedKey={verifiedKey}
+        />
+      );
+    }
     return (
       <VerifiedGuest
         code={normalizedCode}
         name={confirmedName}
         verifiedKey={verifiedKey}
+        onBecameHost={setTakeoverSession}
       />
     );
   }
@@ -220,10 +240,12 @@ function VerifiedGuest({
   code,
   name,
   verifiedKey,
+  onBecameHost,
 }: {
   code: string;
   name: string;
   verifiedKey: VerifiedKey;
+  onBecameHost: (session: HostSession) => void;
 }) {
   const t = useT();
   const [config, setConfig] = useState<VerificationConfig | null>(null);
@@ -256,6 +278,7 @@ function VerifiedGuest({
       isHost={false}
       verification={config}
       verifiedKey={verifiedKey}
+      onBecameHost={onBecameHost}
     />
   );
 }
@@ -266,12 +289,15 @@ function LiveMeeting({
   isHost,
   verification,
   verifiedKey,
+  onBecameHost,
 }: {
   code: string;
   name: string;
   isHost: boolean;
   verification?: VerificationConfig;
   verifiedKey?: VerifiedKey;
+  // Present for verified guests: lets the real host reclaim an unhosted meeting.
+  onBecameHost?: (session: HostSession) => void;
 }) {
   const navigate = useNavigate();
   const t = useT();
@@ -280,18 +306,12 @@ function LiveMeeting({
 
   if (meeting.phase === 'waiting') {
     return (
-      <CenteredCard>
-        <Stack alignItems="center" spacing={2}>
-          <CircularProgress size={28} />
-          <Typography variant="h6">{t.verify_waiting_title}</Typography>
-          <Typography variant="body2" sx={{ opacity: 0.7 }}>
-            {t.verify_waiting_body}
-          </Typography>
-          <Button variant="text" onClick={() => navigate('/')} sx={{ textTransform: 'none' }}>
-            {t.meeting_back_home}
-          </Button>
-        </Stack>
-      </CenteredCard>
+      <WaitingRoom
+        code={code}
+        verifiedKey={verifiedKey}
+        onBecameHost={onBecameHost}
+        onLeave={() => navigate('/')}
+      />
     );
   }
 
@@ -379,6 +399,85 @@ function LiveMeeting({
         navigate('/');
       }}
     />
+  );
+}
+
+/**
+ * Shown to a verified guest while the host is absent. A guest who actually
+ * holds the host passkey can reclaim hosting from here — this is what lets a
+ * host re-host a meeting they created earlier (the shared link is the guest
+ * link, with no `host=1`).
+ */
+function WaitingRoom({
+  code,
+  verifiedKey,
+  onBecameHost,
+  onLeave,
+}: {
+  code: string;
+  verifiedKey?: VerifiedKey;
+  onBecameHost?: (session: HostSession) => void;
+  onLeave: () => void;
+}) {
+  const t = useT();
+  const [claiming, setClaiming] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const canClaim = !!verifiedKey && !!onBecameHost;
+
+  const claimHost = async () => {
+    if (!verifiedKey || !onBecameHost) return;
+    setClaiming(true);
+    setError(null);
+    try {
+      const session = await HostSession.create({
+        code,
+        identityCredentialId: loadHostIdentity()?.credentialId ?? null,
+        identityPublicKey: verifiedKey.publicKey,
+        identityAlg: verifiedKey.alg,
+      });
+      onBecameHost(session); // unmounts this screen and starts hosting
+    } catch (e: any) {
+      setError(e?.message ?? t.verify_host_unlock_failed);
+      setClaiming(false);
+    }
+  };
+
+  return (
+    <CenteredCard>
+      <Stack alignItems="center" spacing={2}>
+        <CircularProgress size={28} />
+        <Typography variant="h6">{t.verify_waiting_title}</Typography>
+        <Typography variant="body2" sx={{ opacity: 0.7 }}>
+          {t.verify_waiting_body}
+        </Typography>
+        {canClaim && (
+          <>
+            <Divider flexItem sx={{ opacity: 0.5 }}>
+              {t.verify_waiting_host_question}
+            </Divider>
+            {error && (
+              <Typography variant="body2" color="error">
+                {error}
+              </Typography>
+            )}
+            <Button
+              variant="outlined"
+              onClick={claimHost}
+              disabled={claiming}
+              startIcon={
+                claiming ? <CircularProgress size={16} /> : <VerifiedUserIcon />
+              }
+              sx={{ textTransform: 'none' }}
+            >
+              {claiming ? t.verify_host_unlocking : t.verify_waiting_host_cta}
+            </Button>
+          </>
+        )}
+        <Button variant="text" onClick={onLeave} sx={{ textTransform: 'none' }}>
+          {t.meeting_back_home}
+        </Button>
+      </Stack>
+    </CenteredCard>
   );
 }
 

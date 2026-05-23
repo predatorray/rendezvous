@@ -122,6 +122,8 @@ const zh = {
 
   verify_waiting_title: '正在等待主持人',
   verify_waiting_body: '会议尚未开始。主持人到场后你将自动加入。',
+  verify_waiting_host_question: '你是主持人吗？',
+  verify_waiting_host_cta: '主持本次会议',
   verify_checking: '正在验证主持人身份…',
 
   verify_badge_host: '已验证主持人',

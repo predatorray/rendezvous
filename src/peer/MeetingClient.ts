@@ -121,6 +121,7 @@ export class MeetingClient {
   private authNonce: string | null = null;
   private authTimer: ReturnType<typeof setTimeout> | null = null;
   private retryTimer: ReturnType<typeof setTimeout> | null = null;
+  private connectTimer: ReturnType<typeof setTimeout> | null = null;
 
   // Tracks remote streams by logical peer id for both host and client.
   private remoteStreams = new Map<string, MediaStream>();
@@ -169,12 +170,26 @@ export class MeetingClient {
 
     const peerId = this.isHost ? this.hostId : randomClientPeerId(this.code);
     const iceServers = await fetchIceServers();
+    await this.openPeerWithRetry(peerId, iceServers);
+
+    this.emit('ready', this.selfId);
+
+    if (this.isHost) {
+      this.startAsHost();
+    } else {
+      this.startAsClient();
+    }
+  }
+
+  private openPeer(
+    peerId: string,
+    iceServers: RTCIceServer[] | null
+  ): Promise<void> {
     this.peer = new Peer(peerId, {
       debug: 1,
       ...(iceServers ? { config: { iceServers } } : {}),
     });
-
-    await new Promise<void>((resolve, reject) => {
+    return new Promise<void>((resolve, reject) => {
       const peer = this.peer!;
       const onOpen = (id: string) => {
         this.selfId = id;
@@ -188,13 +203,34 @@ export class MeetingClient {
       peer.once('open', onOpen);
       peer.once('error', onErr);
     });
+  }
 
-    this.emit('ready', this.selfId);
-
-    if (this.isHost) {
-      this.startAsHost();
-    } else {
-      this.startAsClient();
+  /**
+   * Opens the PeerJS peer. A verified host re-hosting a meeting they just left
+   * can transiently get `unavailable-id` while the broker releases the previous
+   * registration, so for that case we retry for a short window instead of
+   * failing outright. All other peers open once (unchanged behavior).
+   */
+  private async openPeerWithRetry(
+    peerId: string,
+    iceServers: RTCIceServer[] | null
+  ): Promise<void> {
+    const verifiedHost = this.isHost && this.verification?.role === 'host';
+    const maxAttempts = verifiedHost ? 6 : 1;
+    for (let attempt = 1; ; attempt++) {
+      try {
+        await this.openPeer(peerId, iceServers);
+        return;
+      } catch (err) {
+        try {
+          this.peer?.destroy();
+        } catch {}
+        this.peer = null;
+        const retriable =
+          verifiedHost && (err as any)?.type === 'unavailable-id';
+        if (!retriable || attempt >= maxAttempts) throw err;
+        await new Promise((r) => setTimeout(r, 2500));
+      }
     }
   }
 
@@ -547,12 +583,26 @@ export class MeetingClient {
     }
     const dc = peer.connect(this.hostId, { reliable: true });
     this.hostDataConn = dc;
+    // A verified guest can't rely solely on `peer-unavailable`: if the broker
+    // still holds a stale registration for a host that just left, the
+    // connection neither opens nor errors. Time out and fall back to the
+    // waiting room (which retries) so we never hang on "joining".
+    if (this.isVerifiedGuest()) {
+      if (this.connectTimer) clearTimeout(this.connectTimer);
+      this.connectTimer = setTimeout(() => {
+        if (!this.clientConnected) this.enterWaiting();
+      }, 10000);
+    }
     dc.on('open', () => {
       this.clientConnected = true;
       this.waitingForHost = false;
       if (this.retryTimer) {
         clearTimeout(this.retryTimer);
         this.retryTimer = null;
+      }
+      if (this.connectTimer) {
+        clearTimeout(this.connectTimer);
+        this.connectTimer = null;
       }
       this.onHostConnectionOpen(dc);
     });
@@ -569,6 +619,10 @@ export class MeetingClient {
   }
 
   private enterWaiting(): void {
+    if (this.connectTimer) {
+      clearTimeout(this.connectTimer);
+      this.connectTimer = null;
+    }
     if (!this.waitingForHost) {
       this.waitingForHost = true;
       this.emit('waiting');
@@ -738,6 +792,10 @@ export class MeetingClient {
     if (this.authTimer) {
       clearTimeout(this.authTimer);
       this.authTimer = null;
+    }
+    if (this.connectTimer) {
+      clearTimeout(this.connectTimer);
+      this.connectTimer = null;
     }
     try {
       this.peer?.destroy();

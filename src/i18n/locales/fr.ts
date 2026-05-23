@@ -129,6 +129,8 @@ const fr = {
   verify_waiting_title: 'En attente de l’hôte',
   verify_waiting_body:
     'Cette réunion n’a pas encore commencé. Vous rejoindrez automatiquement dès que l’hôte arrivera.',
+  verify_waiting_host_question: 'Êtes-vous l’hôte ?',
+  verify_waiting_host_cta: 'Animer cette réunion',
   verify_checking: 'Vérification de l’identité de l’hôte…',
 
   verify_badge_host: 'Hôte vérifié',
