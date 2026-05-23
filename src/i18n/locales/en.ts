@@ -21,6 +21,7 @@ const en = {
 
   meeting_invalid_code: 'Invalid meeting code',
   meeting_back_home: 'Back to home',
+  meeting_host_this: 'Host this meeting',
   meeting_join_title: 'Join meeting',
   meeting_enter_name: 'Please enter your name to continue.',
   meeting_your_name: 'Your name',

@@ -21,6 +21,7 @@ const es = {
 
   meeting_invalid_code: 'Código de reunión no válido',
   meeting_back_home: 'Volver al inicio',
+  meeting_host_this: 'Organizar esta reunión',
   meeting_join_title: 'Unirse a la reunión',
   meeting_enter_name: 'Por favor, introduce tu nombre para continuar.',
   meeting_your_name: 'Tu nombre',

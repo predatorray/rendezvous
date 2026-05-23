@@ -21,6 +21,7 @@ const fr = {
 
   meeting_invalid_code: 'Code de réunion invalide',
   meeting_back_home: 'Retour à l’accueil',
+  meeting_host_this: 'Animer cette réunion',
   meeting_join_title: 'Rejoindre la réunion',
   meeting_enter_name: 'Veuillez entrer votre nom pour continuer.',
   meeting_your_name: 'Votre nom',

@@ -8,6 +8,7 @@ import {
   Typography,
 } from '@mui/material';
 import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
+import VideocamIcon from '@mui/icons-material/Videocam';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import MeetingRoom from '../components/MeetingRoom';
 import { useMeeting } from '../peer/useMeeting';
@@ -44,6 +45,9 @@ export default function MeetingPage() {
   const [takeoverSession, setTakeoverSession] = useState<HostSession | null>(
     null
   );
+  // Same idea for ordinary (non-verified) meetings: the host opens their own
+  // invite link, finds no one hosting, and re-hosts it.
+  const [plainTakeover, setPlainTakeover] = useState(false);
 
   const normalizedCode = code.trim().toLowerCase();
   const validCode = isValidMeetingCode(normalizedCode);
@@ -143,8 +147,18 @@ export default function MeetingPage() {
     );
   }
 
+  // Ordinary meeting. A guest who can't reach a host may re-host the same code
+  // (remounting as host — the `key` change tears down the guest client first).
   return (
-    <LiveMeeting code={normalizedCode} name={confirmedName} isHost={isHost} />
+    <LiveMeeting
+      key={plainTakeover ? 'host' : 'guest'}
+      code={normalizedCode}
+      name={confirmedName}
+      isHost={isHost || plainTakeover}
+      onClaimHostPlain={
+        !isHost && !plainTakeover ? () => setPlainTakeover(true) : undefined
+      }
+    />
   );
 }
 
@@ -290,6 +304,7 @@ function LiveMeeting({
   verification,
   verifiedKey,
   onBecameHost,
+  onClaimHostPlain,
 }: {
   code: string;
   name: string;
@@ -298,6 +313,8 @@ function LiveMeeting({
   verifiedKey?: VerifiedKey;
   // Present for verified guests: lets the real host reclaim an unhosted meeting.
   onBecameHost?: (session: HostSession) => void;
+  // Present for ordinary-meeting guests: re-host the same code (no passkey).
+  onClaimHostPlain?: () => void;
 }) {
   const navigate = useNavigate();
   const t = useT();
@@ -347,9 +364,24 @@ function LiveMeeting({
         <Typography variant="body2" sx={{ opacity: 0.7, mb: 3 }}>
           {meeting.errorMessage}
         </Typography>
-        <Button variant="contained" onClick={() => navigate('/')}>
-          {t.meeting_back_home}
-        </Button>
+        <Stack spacing={1.5} alignItems="center">
+          {onClaimHostPlain && (
+            <Button
+              variant="contained"
+              startIcon={<VideocamIcon />}
+              onClick={onClaimHostPlain}
+              sx={{ textTransform: 'none' }}
+            >
+              {t.meeting_host_this}
+            </Button>
+          )}
+          <Button
+            variant={onClaimHostPlain ? 'text' : 'contained'}
+            onClick={() => navigate('/')}
+          >
+            {t.meeting_back_home}
+          </Button>
+        </Stack>
       </CenteredCard>
     );
   }

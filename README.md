@@ -44,6 +44,8 @@ PeerJS public broker is used only for the initial WebRTC signaling.
 - Chat history is preserved by the host so late joiners see prior messages
 - Sharable invite link and copy-able meeting code
 - Host leaving ends the meeting for everyone
+- Opening an invite link to a meeting with no active host offers to host it,
+  so a host can leave and re-host from the same link
 - **Verified meetings (experimental)** — host proves their identity with a
   passkey so guests can’t be fooled by an impostor ([details](#verified-meetings-experimental))
 - No accounts, no passcodes, fully static-site deployable
