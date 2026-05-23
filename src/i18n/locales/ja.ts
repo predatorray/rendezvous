@@ -21,7 +21,6 @@ const ja = {
 
   meeting_invalid_code: '無効なミーティングコード',
   meeting_back_home: 'ホームに戻る',
-  meeting_host_this: 'このミーティングを主催',
   meeting_join_title: 'ミーティングに参加',
   meeting_enter_name: '続行するにはお名前を入力してください。',
   meeting_your_name: 'お名前',

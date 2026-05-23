@@ -25,9 +25,12 @@ test.describe('Ordinary meeting re-hosting', () => {
     const code = freshMeetingCode();
     await page.goto(`/#/m/${code}?name=Alice`);
 
-    // No host present → the error screen now offers re-hosting.
+    // No host present → the waiting room (not an error), with a re-host option.
+    await expect(page.getByText('Waiting for the host')).toBeVisible({
+      timeout: 30_000,
+    });
     const host = page.getByRole('button', { name: 'Host this meeting' });
-    await expect(host).toBeVisible({ timeout: 30_000 });
+    await expect(host).toBeVisible();
 
     // Claiming hosts the meeting.
     await host.click();

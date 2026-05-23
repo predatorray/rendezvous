@@ -21,7 +21,6 @@ const zh = {
 
   meeting_invalid_code: '无效的会议代码',
   meeting_back_home: '返回首页',
-  meeting_host_this: '主持本次会议',
   meeting_join_title: '加入会议',
   meeting_enter_name: '请输入你的名字以继续。',
   meeting_your_name: '你的名字',

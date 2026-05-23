@@ -37,8 +37,10 @@ export interface MeetingEvents {
     detail?: string
   ) => void;
   ready: (selfId: string) => void;
-  // Verified meeting (experimental) lifecycle, guest side only.
+  // Guest lifecycle.
   waiting: () => void; // host not present yet; waiting room
+  joined: () => void; // connected to host (ordinary meeting goes live)
+  // Verified meeting (experimental) only.
   verifying: () => void; // connected, checking host identity
   verified: (fingerprint: string) => void; // host identity confirmed
 }
@@ -556,14 +558,11 @@ export class MeetingClient {
     peer.on('error', (err) => {
       // PeerJS surfaces peer-unavailable when the host id isn't registered.
       if ((err as any).type === 'peer-unavailable') {
-        // Verified meetings show a waiting room and keep retrying until the
-        // host appears; ordinary meetings keep the original behavior.
-        if (this.isVerifiedGuest() && !this.clientConnected) {
-          this.enterWaiting();
-          return;
-        }
-        this.emit('ended', 'error', 'Meeting not found.');
-        this.shutdown();
+        // The host isn't here yet. Show the waiting room and keep retrying
+        // until a host appears (then auto-join), rather than dead-ending on an
+        // error — this is the same experience for ordinary and verified
+        // meetings.
+        if (!this.clientConnected) this.enterWaiting();
         return;
       }
       console.error('Client peer error', err);
@@ -583,16 +582,14 @@ export class MeetingClient {
     }
     const dc = peer.connect(this.hostId, { reliable: true });
     this.hostDataConn = dc;
-    // A verified guest can't rely solely on `peer-unavailable`: if the broker
-    // still holds a stale registration for a host that just left, the
-    // connection neither opens nor errors. Time out and fall back to the
-    // waiting room (which retries) so we never hang on "joining".
-    if (this.isVerifiedGuest()) {
-      if (this.connectTimer) clearTimeout(this.connectTimer);
-      this.connectTimer = setTimeout(() => {
-        if (!this.clientConnected) this.enterWaiting();
-      }, 10000);
-    }
+    // A guest can't rely solely on `peer-unavailable`: if the broker still
+    // holds a stale registration for a host that just left, the connection
+    // neither opens nor errors. Time out and fall back to the waiting room
+    // (which retries) so we never hang on "joining".
+    if (this.connectTimer) clearTimeout(this.connectTimer);
+    this.connectTimer = setTimeout(() => {
+      if (!this.clientConnected) this.enterWaiting();
+    }, 10000);
     dc.on('open', () => {
       this.clientConnected = true;
       this.waitingForHost = false;
@@ -654,6 +651,7 @@ export class MeetingClient {
   // identity check for verified ones.
   private joinHost(dc: DataConnection): void {
     this.safeSend(dc, { type: 'hello', name: this.name });
+    this.emit('joined');
     this.publishOwnState();
     // Place a call to host with our stream so host can relay it.
     if (this.localStream && this.peer) {

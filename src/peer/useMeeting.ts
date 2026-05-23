@@ -101,9 +101,9 @@ export function useMeeting({
 
   const clientRef = useRef<MeetingClient | null>(null);
   const startedRef = useRef(false);
-  // Verified guests don't go "live" until the host's identity checks out, so
-  // their phase is driven by events rather than start() resolving.
-  const verifiedGuest = verification?.role === 'guest';
+  // Guests don't go "live" the moment the broker connects — they wait until
+  // they've actually joined a host (or, for verified meetings, verified it).
+  // Their phase is driven by events; only the host goes live on start().
 
   useEffect(() => {
     if (startedRef.current) return;
@@ -119,6 +119,11 @@ export function useMeeting({
     unsubs.push(
       client.on('waiting', () => {
         if (!cancelled) setPhase('waiting');
+      })
+    );
+    unsubs.push(
+      client.on('joined', () => {
+        if (!cancelled) setPhase('live');
       })
     );
     unsubs.push(
@@ -200,9 +205,9 @@ export function useMeeting({
       setPhase('joining');
       try {
         await client.start(stream);
-        // Verified guests stay in 'joining' until a waiting/verifying/verified
-        // event moves them; everyone else goes live as soon as start resolves.
-        if (!cancelled && !verifiedGuest) setPhase('live');
+        // Only the host goes live on start(). Guests stay in 'joining' until a
+        // waiting / joined / verified event moves them.
+        if (!cancelled && isHost) setPhase('live');
       } catch (e: any) {
         if (cancelled) return;
         console.error('Meeting start failed', e);

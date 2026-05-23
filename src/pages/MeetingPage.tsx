@@ -327,6 +327,7 @@ function LiveMeeting({
         code={code}
         verifiedKey={verifiedKey}
         onBecameHost={onBecameHost}
+        onClaimHostPlain={onClaimHostPlain}
         onLeave={() => navigate('/')}
       />
     );
@@ -364,24 +365,9 @@ function LiveMeeting({
         <Typography variant="body2" sx={{ opacity: 0.7, mb: 3 }}>
           {meeting.errorMessage}
         </Typography>
-        <Stack spacing={1.5} alignItems="center">
-          {onClaimHostPlain && (
-            <Button
-              variant="contained"
-              startIcon={<VideocamIcon />}
-              onClick={onClaimHostPlain}
-              sx={{ textTransform: 'none' }}
-            >
-              {t.meeting_host_this}
-            </Button>
-          )}
-          <Button
-            variant={onClaimHostPlain ? 'text' : 'contained'}
-            onClick={() => navigate('/')}
-          >
-            {t.meeting_back_home}
-          </Button>
-        </Stack>
+        <Button variant="contained" onClick={() => navigate('/')}>
+          {t.meeting_back_home}
+        </Button>
       </CenteredCard>
     );
   }
@@ -444,33 +430,41 @@ function WaitingRoom({
   code,
   verifiedKey,
   onBecameHost,
+  onClaimHostPlain,
   onLeave,
 }: {
   code: string;
   verifiedKey?: VerifiedKey;
   onBecameHost?: (session: HostSession) => void;
+  onClaimHostPlain?: () => void;
   onLeave: () => void;
 }) {
   const t = useT();
   const [claiming, setClaiming] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const canClaim = !!verifiedKey && !!onBecameHost;
+  // Verified meetings reclaim via a passkey ceremony; ordinary meetings just
+  // remount as host.
+  const verifiedClaim = !!verifiedKey && !!onBecameHost;
+  const canClaim = verifiedClaim || !!onClaimHostPlain;
 
   const claimHost = async () => {
-    if (!verifiedKey || !onBecameHost) return;
-    setClaiming(true);
-    setError(null);
-    try {
-      const session = await HostSession.create({
-        code,
-        identityCredentialId: loadHostIdentity()?.credentialId ?? null,
-        identityPublicKey: verifiedKey.publicKey,
-        identityAlg: verifiedKey.alg,
-      });
-      onBecameHost(session); // unmounts this screen and starts hosting
-    } catch (e: any) {
-      setError(e?.message ?? t.verify_host_unlock_failed);
-      setClaiming(false);
+    if (verifiedClaim) {
+      setClaiming(true);
+      setError(null);
+      try {
+        const session = await HostSession.create({
+          code,
+          identityCredentialId: loadHostIdentity()?.credentialId ?? null,
+          identityPublicKey: verifiedKey!.publicKey,
+          identityAlg: verifiedKey!.alg,
+        });
+        onBecameHost!(session); // unmounts this screen and starts hosting
+      } catch (e: any) {
+        setError(e?.message ?? t.verify_host_unlock_failed);
+        setClaiming(false);
+      }
+    } else if (onClaimHostPlain) {
+      onClaimHostPlain();
     }
   };
 
@@ -497,7 +491,13 @@ function WaitingRoom({
               onClick={claimHost}
               disabled={claiming}
               startIcon={
-                claiming ? <CircularProgress size={16} /> : <VerifiedUserIcon />
+                claiming ? (
+                  <CircularProgress size={16} />
+                ) : verifiedClaim ? (
+                  <VerifiedUserIcon />
+                ) : (
+                  <VideocamIcon />
+                )
               }
               sx={{ textTransform: 'none' }}
             >

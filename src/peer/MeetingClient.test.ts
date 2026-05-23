@@ -54,7 +54,16 @@ async function startClient() {
 }
 
 describe('MeetingClient', () => {
-  beforeEach(() => resetPeerJsMock());
+  beforeEach(() => {
+    resetPeerJsMock();
+    // The guest waiting-room uses setTimeout for retries / connect timeouts.
+    // Fake timers keep those deterministic and prevent leaks across tests.
+    jest.useFakeTimers();
+  });
+  afterEach(() => {
+    jest.clearAllTimers();
+    jest.useRealTimers();
+  });
 
   it('host: resolves start() on peer open and emits ready + members for self', async () => {
     const ready = jest.fn();
@@ -285,12 +294,34 @@ describe('MeetingClient', () => {
     expect(ended).toHaveBeenCalledWith('host-left');
   });
 
-  it('client: peer-unavailable error triggers ended error', async () => {
+  it('client: peer-unavailable shows the waiting room and retries (no error)', async () => {
+    const waiting = jest.fn();
     const ended = jest.fn();
     const { client, peer } = await startClient();
+    client.on('waiting', waiting);
     client.on('ended', ended);
+    const before = peer.outgoingConnects.length;
+
     peer.fakeError({ type: 'peer-unavailable' });
-    expect(ended).toHaveBeenCalledWith('error', 'Meeting not found.');
+    expect(waiting).toHaveBeenCalledTimes(1);
+    expect(ended).not.toHaveBeenCalled();
+
+    // Rather than giving up, it schedules another connection attempt.
+    jest.advanceTimersByTime(2500);
+    expect(peer.outgoingConnects.length).toBe(before + 1);
+  });
+
+  it('client: auto-joins when a host appears after waiting', async () => {
+    const joined = jest.fn();
+    const { client, peer } = await startClient();
+    client.on('joined', joined);
+
+    peer.fakeError({ type: 'peer-unavailable' }); // host not here yet
+    jest.advanceTimersByTime(2500); // retry connects again
+    const dc = peer.outgoingConnects[peer.outgoingConnects.length - 1];
+    dc.fakeOpen(); // host has arrived
+
+    expect(joined).toHaveBeenCalled();
   });
 
   it('client: sendChat sends chat-send to the host', async () => {
