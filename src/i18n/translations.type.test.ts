@@ -6,7 +6,7 @@ describe('supportLanguage', () => {
   });
 
   it('returns undefined for unsupported codes', () => {
-    expect(supportLanguage('de')).toBeUndefined();
+    expect(supportLanguage('it')).toBeUndefined();
     expect(supportLanguage('')).toBeUndefined();
     expect(supportLanguage('EN')).toBeUndefined();
   });
