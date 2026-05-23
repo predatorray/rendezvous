@@ -1,5 +1,5 @@
 <div align="center">
-    <a href="https://predatorray.github.io/rendezvous/" target="_blank"><img src="https://raw.githubusercontent.com/predatorray/rendezvous/assets/rendezvous-title.svg" alt="Rendezvous" height="72" /></a>
+    <a href="https://www.predatorray.me/rendezvous/" target="_blank"><img src="https://raw.githubusercontent.com/predatorray/rendezvous/assets/rendezvous-title.svg" alt="Rendezvous" height="72" /></a>
     <h3><em>where conversations meet, serverlessly.</em></h3>
 </div>
 
@@ -17,7 +17,7 @@
 
 ---
 
-👉 **Try it online: <https://predatorray.github.io/rendezvous/>**
+👉 **Try it online: <https://www.predatorray.me/rendezvous/>**
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/predatorray/rendezvous/assets/screenshot-meeting.png" height="300" alt="Meeting Screenshot"/>
