@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+  Alert,
   Box,
   Button,
   Dialog,
@@ -15,6 +16,7 @@ import {
 import ContentCopyIcon from '@mui/icons-material/ContentCopy';
 import CheckIcon from '@mui/icons-material/Check';
 import ShareIcon from '@mui/icons-material/Share';
+import VerifiedUserIcon from '@mui/icons-material/VerifiedUser';
 import XIcon from '@mui/icons-material/X';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
@@ -23,11 +25,16 @@ import RedditIcon from '@mui/icons-material/Reddit';
 import EmailIcon from '@mui/icons-material/Email';
 import { useT } from '../i18n/useLangContext';
 import { displayMeetingCode } from '../util/code';
+import { VerifiedKey, verifiedKeyParams } from '../util/verifiedMeeting';
+import { displayFingerprint, fingerprintOf } from '../crypto/verify';
 
 interface Props {
   open: boolean;
   onClose: () => void;
   code: string;
+  // When set, the meeting is verified: the link embeds the host key and the
+  // fingerprint is shown so it can be shared over a second channel.
+  verifiedKey?: VerifiedKey;
 }
 
 interface ShareTarget {
@@ -82,18 +89,41 @@ const TARGETS: ShareTarget[] = [
   },
 ];
 
-export default function ShareDialog({ open, onClose, code }: Props) {
+export default function ShareDialog({ open, onClose, code, verifiedKey }: Props) {
   const t = useT();
-  const [copiedField, setCopiedField] = useState<'code' | 'link' | null>(null);
+  const [copiedField, setCopiedField] = useState<
+    'code' | 'link' | 'fingerprint' | null
+  >(null);
+  const [fingerprint, setFingerprint] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!verifiedKey) {
+      setFingerprint(null);
+      return;
+    }
+    let active = true;
+    fingerprintOf(verifiedKey.publicKey).then((fp) => {
+      if (active) setFingerprint(displayFingerprint(fp));
+    });
+    return () => {
+      active = false;
+    };
+  }, [verifiedKey]);
 
   const shownCode = displayMeetingCode(code);
-  const link = `${window.location.origin}${window.location.pathname}#/m/${shownCode}`;
+  const base = `${window.location.origin}${window.location.pathname}#/m/${shownCode}`;
+  const link = verifiedKey
+    ? `${base}?${new URLSearchParams(verifiedKeyParams(verifiedKey)).toString()}`
+    : base;
   const shareText = t.share_text(shownCode);
   const shareSubject = t.share_subject;
   const canNativeShare =
     typeof navigator !== 'undefined' && typeof navigator.share === 'function';
 
-  const copy = async (value: string, which: 'code' | 'link') => {
+  const copy = async (
+    value: string,
+    which: 'code' | 'link' | 'fingerprint'
+  ) => {
     try {
       await navigator.clipboard.writeText(value);
     } catch {
@@ -168,6 +198,57 @@ export default function ShareDialog({ open, onClose, code }: Props) {
               </Tooltip>
             </Stack>
           </Stack>
+
+          {verifiedKey && (
+            <Stack spacing={1}>
+              <Stack direction="row" spacing={0.5} alignItems="center">
+                <VerifiedUserIcon color="success" sx={{ fontSize: 16 }} />
+                <Typography variant="caption" sx={{ opacity: 0.7 }}>
+                  {t.share_fingerprint_label}
+                </Typography>
+              </Stack>
+              <Stack direction="row" spacing={1}>
+                <TextField
+                  value={fingerprint ?? '…'}
+                  fullWidth
+                  size="small"
+                  InputProps={{ readOnly: true }}
+                  inputProps={{
+                    style: {
+                      fontFamily: 'ui-monospace, Menlo, monospace',
+                      fontSize: 12,
+                    },
+                  }}
+                  onFocus={(e) => e.target.select()}
+                />
+                <Tooltip
+                  title={
+                    copiedField === 'fingerprint'
+                      ? t.share_copied
+                      : t.share_copy_fingerprint
+                  }
+                >
+                  <span>
+                    <IconButton
+                      onClick={() => fingerprint && copy(fingerprint, 'fingerprint')}
+                      disabled={!fingerprint}
+                    >
+                      {copiedField === 'fingerprint' ? (
+                        <CheckIcon />
+                      ) : (
+                        <ContentCopyIcon />
+                      )}
+                    </IconButton>
+                  </span>
+                </Tooltip>
+              </Stack>
+              <Alert severity="info" variant="outlined" sx={{ py: 0.25 }}>
+                <Typography variant="caption">
+                  {t.share_fingerprint_hint}
+                </Typography>
+              </Alert>
+            </Stack>
+          )}
 
           <Box>
             <Typography

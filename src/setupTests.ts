@@ -16,11 +16,17 @@ if (!('ResizeObserver' in window)) {
   };
 }
 
-if (!(window as any).crypto || !(window as any).crypto.getRandomValues) {
-  (window as any).crypto = {
-    getRandomValues: (buf: Uint32Array) => {
-      for (let i = 0; i < buf.length; i++) buf[i] = Math.floor(Math.random() * 0xffffffff);
-      return buf;
-    },
-  };
+// jsdom doesn't ship WebCrypto's SubtleCrypto, which the verified-meeting
+// code relies on. Borrow Node's implementation so those modules (and their
+// tests) have real getRandomValues + subtle.
+{
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const nodeCrypto = require('crypto').webcrypto;
+  const existing = (window as any).crypto;
+  if (!existing || !existing.subtle) {
+    (window as any).crypto = nodeCrypto;
+  }
+  if (typeof (global as any).crypto === 'undefined') {
+    (global as any).crypto = (window as any).crypto;
+  }
 }

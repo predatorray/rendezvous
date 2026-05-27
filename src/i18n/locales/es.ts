@@ -108,6 +108,55 @@ const es = {
   theme_light: 'claro',
 
   language_change: 'Cambiar idioma',
+
+  // Reunión verificada (experimental)
+  verify_toggle_label: 'Reunión verificada',
+  verify_experimental_tag: 'Experimental',
+  verify_toggle_hint:
+    'Los invitados verifican criptográficamente que de verdad eres tú quien organiza, mediante una llave de acceso.',
+  verify_unsupported: 'Este navegador no admite llaves de acceso.',
+  verify_host_button: 'Organizar reunión verificada',
+  verify_create_failed: 'No se pudo crear tu identidad con llave de acceso.',
+
+  verify_host_unlock_title: 'Desbloquear para organizar',
+  verify_host_unlock_body:
+    'Confirma con tu llave de acceso para que los invitados puedan verificar que esta reunión la organizas tú.',
+  verify_host_unlock_cta: 'Verificar con llave de acceso',
+  verify_host_unlocking: 'Esperando la llave de acceso…',
+  verify_host_unlock_failed: 'Falló la verificación con llave de acceso.',
+
+  verify_waiting_title: 'Esperando al anfitrión',
+  verify_waiting_body:
+    'Esta reunión aún no ha empezado. Te unirás automáticamente cuando llegue el anfitrión.',
+  verify_waiting_host_question: '¿Eres el anfitrión?',
+  verify_waiting_host_cta: 'Organizar esta reunión',
+  verify_checking: 'Verificando la identidad del anfitrión…',
+
+  verify_badge_host: 'Anfitrión verificado',
+  verify_badge_verified: 'Verificado',
+  verify_badge_pending: 'Verificando…',
+
+  verify_error_timeout:
+    'El anfitrión no respondió a la verificación de identidad.',
+  verify_error_unavailable:
+    'No se pudo verificar esta reunión. El anfitrión no usa verificación, o alguien podría estar suplantándolo.',
+  verify_error_failed:
+    'No se pudo verificar la identidad del anfitrión. No compartas nada sensible: puede que no estés hablando con el anfitrión real.',
+
+  share_fingerprint_label: 'Huella del anfitrión',
+  share_copy_fingerprint: 'Copiar huella',
+  share_fingerprint_hint:
+    'Comparte esta huella por otro canal (en persona, por llamada). Los invitados pueden compararla para descartar a un impostor.',
+
+  verify_identity_view: 'Ver identidad del anfitrión',
+  verify_identity_title: 'Identidad del anfitrión',
+  verify_identity_body_host:
+    'Esta es la huella de tu reunión. Los invitados a quienes se la diste pueden confirmar que te localizaron a ti.',
+  verify_identity_status_verified:
+    'La identidad de este anfitrión se ha verificado criptográficamente.',
+  verify_identity_status_pending: 'Verificando la identidad del anfitrión…',
+  verify_identity_compare_hint:
+    'Compárala con la huella que el anfitrión te dio por separado (en persona, por llamada, en un mensaje firmado). Si no coinciden, el enlace pudo haber sido manipulado: no confíes en la reunión.',
 } as const;
 
 export default es;

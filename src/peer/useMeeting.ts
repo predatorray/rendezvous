@@ -1,20 +1,39 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { MeetingClient } from './MeetingClient';
+import { MeetingClient, VerificationConfig } from './MeetingClient';
 import { Member, TimelineItem } from '../types';
 import { useT } from '../i18n/useLangContext';
+import { Translations } from '../i18n/translations.type';
 
 interface UseMeetingArgs {
   code: string;
   name: string;
   isHost: boolean;
+  verification?: VerificationConfig;
 }
 
 export type MeetingPhase =
   | 'preparing'
   | 'joining'
+  | 'waiting'
+  | 'verifying'
   | 'live'
   | 'ended'
   | 'error';
+
+// Verification failure codes emitted by MeetingClient, mapped to copy here so
+// the client layer stays i18n-free.
+function mapErrorDetail(detail: string | undefined, t: Translations): string {
+  switch (detail) {
+    case 'verify-timeout':
+      return t.verify_error_timeout;
+    case 'verify-unavailable':
+      return t.verify_error_unavailable;
+    case 'verify-failed':
+      return t.verify_error_failed;
+    default:
+      return detail ?? t.meeting_error_default;
+  }
+}
 
 export interface UseMeetingState {
   phase: MeetingPhase;
@@ -27,6 +46,8 @@ export interface UseMeetingState {
   remoteStreams: Map<string, MediaStream>;
   audioEnabled: boolean;
   videoEnabled: boolean;
+  // Verified meeting: the confirmed host fingerprint once verification passes.
+  verifiedFingerprint: string | null;
   sendChat: (text: string) => void;
   toggleAudio: () => void;
   toggleVideo: () => void;
@@ -57,6 +78,7 @@ export function useMeeting({
   code,
   name,
   isHost,
+  verification,
 }: UseMeetingArgs): UseMeetingState {
   const t = useT();
   const [phase, setPhase] = useState<MeetingPhase>('preparing');
@@ -73,21 +95,49 @@ export function useMeeting({
   );
   const [audioEnabled, setAudioEnabled] = useState(true);
   const [videoEnabled, setVideoEnabled] = useState(true);
+  const [verifiedFingerprint, setVerifiedFingerprint] = useState<string | null>(
+    null
+  );
 
   const clientRef = useRef<MeetingClient | null>(null);
   const startedRef = useRef(false);
+  // Guests don't go "live" the moment the broker connects — they wait until
+  // they've actually joined a host (or, for verified meetings, verified it).
+  // Their phase is driven by events; only the host goes live on start().
 
   useEffect(() => {
     if (startedRef.current) return;
     startedRef.current = true;
 
     let cancelled = false;
-    const client = new MeetingClient({ code, name, isHost });
+    const client = new MeetingClient({ code, name, isHost, verification });
     clientRef.current = client;
 
     const unsubs: Array<() => void> = [];
 
     unsubs.push(client.on('ready', (id) => setSelfId(id)));
+    unsubs.push(
+      client.on('waiting', () => {
+        if (!cancelled) setPhase('waiting');
+      })
+    );
+    unsubs.push(
+      client.on('joined', () => {
+        if (!cancelled) setPhase('live');
+      })
+    );
+    unsubs.push(
+      client.on('verifying', () => {
+        if (!cancelled) setPhase('verifying');
+      })
+    );
+    unsubs.push(
+      client.on('verified', (fingerprint) => {
+        if (cancelled) return;
+        setVerifiedFingerprint(fingerprint);
+        setPhase('live');
+      })
+    );
     unsubs.push(
       client.on('members', (m) => {
         setMembers(m);
@@ -132,7 +182,7 @@ export function useMeeting({
     unsubs.push(
       client.on('ended', (reason, detail) => {
         if (reason === 'error') {
-          setErrorMessage(detail ?? t.meeting_error_default);
+          setErrorMessage(mapErrorDetail(detail, t));
           setPhase('error');
         } else {
           setEndedReason(reason);
@@ -155,7 +205,9 @@ export function useMeeting({
       setPhase('joining');
       try {
         await client.start(stream);
-        if (!cancelled) setPhase('live');
+        // Only the host goes live on start(). Guests stay in 'joining' until a
+        // waiting / joined / verified event moves them.
+        if (!cancelled && isHost) setPhase('live');
       } catch (e: any) {
         if (cancelled) return;
         console.error('Meeting start failed', e);
@@ -220,6 +272,7 @@ export function useMeeting({
     remoteStreams,
     audioEnabled,
     videoEnabled,
+    verifiedFingerprint,
     sendChat,
     toggleAudio,
     toggleVideo,

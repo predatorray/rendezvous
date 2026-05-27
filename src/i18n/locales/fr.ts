@@ -108,6 +108,55 @@ const fr = {
   theme_light: 'clair',
 
   language_change: 'Changer de langue',
+
+  // Réunion vérifiée (expérimental)
+  verify_toggle_label: 'Réunion vérifiée',
+  verify_experimental_tag: 'Expérimental',
+  verify_toggle_hint:
+    'Les invités vérifient de façon cryptographique que c’est bien vous qui animez, via une clé d’accès.',
+  verify_unsupported:
+    'Les clés d’accès ne sont pas prises en charge par ce navigateur.',
+  verify_host_button: 'Animer une réunion vérifiée',
+  verify_create_failed: 'Impossible de créer votre identité par clé d’accès.',
+
+  verify_host_unlock_title: 'Déverrouiller pour animer',
+  verify_host_unlock_body:
+    'Confirmez avec votre clé d’accès afin que les invités puissent vérifier que cette réunion est bien animée par vous.',
+  verify_host_unlock_cta: 'Vérifier avec la clé d’accès',
+  verify_host_unlocking: 'En attente de la clé d’accès…',
+  verify_host_unlock_failed: 'Échec de la vérification par clé d’accès.',
+
+  verify_waiting_title: 'En attente de l’hôte',
+  verify_waiting_body:
+    'Cette réunion n’a pas encore commencé. Vous rejoindrez automatiquement dès que l’hôte arrivera.',
+  verify_waiting_host_question: 'Êtes-vous l’hôte ?',
+  verify_waiting_host_cta: 'Animer cette réunion',
+  verify_checking: 'Vérification de l’identité de l’hôte…',
+
+  verify_badge_host: 'Hôte vérifié',
+  verify_badge_verified: 'Vérifié',
+  verify_badge_pending: 'Vérification…',
+
+  verify_error_timeout: 'L’hôte n’a pas répondu à la vérification d’identité.',
+  verify_error_unavailable:
+    'Cette réunion n’a pas pu être vérifiée. L’hôte n’utilise pas la vérification, ou quelqu’un l’usurpe peut-être.',
+  verify_error_failed:
+    'L’identité de l’hôte n’a pas pu être vérifiée. Ne partagez rien de sensible : vous ne parlez peut-être pas au véritable hôte.',
+
+  share_fingerprint_label: 'Empreinte de l’hôte',
+  share_copy_fingerprint: 'Copier l’empreinte',
+  share_fingerprint_hint:
+    'Partagez cette empreinte par un autre canal (en personne, par appel). Les invités peuvent la comparer pour écarter tout imposteur.',
+
+  verify_identity_view: 'Voir l’identité de l’hôte',
+  verify_identity_title: 'Identité de l’hôte',
+  verify_identity_body_host:
+    'Voici l’empreinte de votre réunion. Les invités à qui vous l’avez communiquée peuvent confirmer qu’ils vous ont bien joint.',
+  verify_identity_status_verified:
+    'L’identité de cet hôte a été vérifiée de façon cryptographique.',
+  verify_identity_status_pending: 'Vérification de l’identité de l’hôte…',
+  verify_identity_compare_hint:
+    'Comparez ceci avec l’empreinte que l’hôte vous a communiquée séparément (en personne, par appel, par message signé). Si elles ne correspondent pas, le lien a peut-être été falsifié — ne faites pas confiance à la réunion.',
 } as const;
 
 export default fr;

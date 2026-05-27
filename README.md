@@ -56,7 +56,54 @@ PeerJS public broker is used only for the initial WebRTC signaling.
 - Chat history is preserved by the host so late joiners see prior messages
 - Sharable invite link and copy-able meeting code
 - Host leaving ends the meeting for everyone
+- Opening a meeting before its host arrives shows a **waiting room** and joins
+  automatically once a host is live; if nobody is hosting, you can host it
+  yourself — so a host can leave and re-host from the same invite link
+- **Verified meetings (experimental)** — host proves their identity with a
+  passkey so guests can’t be fooled by an impostor ([details](#verified-meetings-experimental))
 - No accounts, no passcodes, fully static-site deployable
+
+## Verified meetings (experimental)
+
+A meeting code proves nothing about *who* is hosting: the host’s PeerJS id is
+derived from the code (`rendezvous-<code>`), so anyone who knows the code can
+race to claim that id on the public broker and relay the meeting as a fake
+"host". Verified meetings let a host prove their identity to guests with a
+**passkey** (WebAuthn), so guests can refuse to join an impostor.
+
+It’s **off by default**. Flip the *Verified meeting* switch on the home page
+(host side only); guests need nothing — verification kicks in automatically
+when they open a verified link.
+
+How it works, briefly:
+
+- The host identity is a passkey; its public key (and a `SHA256:…` fingerprint)
+  is carried in the invite URL. The private key never leaves the authenticator
+  and syncs across the host’s devices via iCloud Keychain / Google Password
+  Manager.
+- The passkey signs an ephemeral session key **once per meeting** (a single
+  biometric prompt); that session key then signs each guest’s fresh nonce, so
+  there’s no prompt per guest.
+- A guest verifies three things before sending any data: the identity key
+  matches the URL fingerprint, the passkey vouches for the session key, and the
+  session key signed *this guest’s* nonce. If any check fails it refuses to
+  join.
+- Both sides can open a **Host identity** dialog to compare the fingerprint
+  out-of-band (SSH-style) — the only thing that catches a *tampered* invite
+  link, since the crypto otherwise trusts whatever key is in the URL.
+- Guests opening a verified link before the host is present see a **waiting
+  room** and join automatically once the host appears.
+- The invite link a host shares is the *guest* link (no `host=1`). When the
+  real host opens it for an unhosted meeting, the waiting room offers **“Host
+  this meeting”** — claiming it with the passkey starts hosting. This is what
+  lets a host create a link ahead of time (or leave and come back) and still
+  host it, rather than being stuck as a guest.
+
+This delivers host **authentication** (it stops peer-id squatters and
+impostors), not yet a fully app-layer-authenticated channel — an active relay
+MITM is a deliberate follow-up. See
+[`docs/verified-meetings.md`](docs/verified-meetings.md) for the full protocol,
+threat model, and limitations.
 
 ## Tech stack
 
@@ -115,6 +162,11 @@ client-side SPA rewrites (e.g. GitHub Pages).
 - `src/pages/` — Home and Meeting pages.
 - `src/components/` — `VideoGrid`, `VideoTile`, `ChatDrawer`,
   `Controls`, `ShareDialog`.
+- `src/crypto/` — verified-meeting primitives (base64url/SHA-256, WebAuthn
+  assertion & signature verification, fingerprints).
+- `src/peer/hostIdentity.ts` + `src/peer/verification.ts` — the passkey
+  identity and the verified-meeting handshake (see
+  [`docs/verified-meetings.md`](docs/verified-meetings.md)).
 
 ### Wire protocol
 
@@ -130,6 +182,9 @@ host:
 | `timeline` | host → all | Authoritative chat or system event |
 | `state` | client → host | Participant changed audio/video |
 | `end` | host → all | Host is leaving — meeting is over |
+| `auth-challenge` | client → host | Verified meetings: guest’s fresh nonce |
+| `auth-response` | host → client | Verified meetings: identity key + session cert + nonce signature |
+| `auth-unavailable` | host → client | Verified meetings: responder isn’t running verification |
 
 ### Media topology
 
@@ -171,6 +226,17 @@ flowchart LR
   path, and media/data are relayed through a TURN server — meaning that
   traffic is proxied by a third-party server rather than flowing directly
   between peers.
+- Verified meetings provide host **authentication**, not a fully
+  app-layer-authenticated channel: an active relay MITM that intercepts the
+  guest *and* connects to the real host is out of scope for this experimental
+  cut. Passkeys are also pinned to the origin domain (the WebAuthn RP id), so a
+  verified identity created on `www.example.com` won’t validate on a bare
+  `example.com` — keep the canonical host consistent. See
+  [`docs/verified-meetings.md`](docs/verified-meetings.md).
+- The public PeerJS broker doesn’t release a departed host’s peer id
+  immediately, so re-hosting the *same* code seconds after leaving can briefly
+  fail (re-hosting retries for a short grace window). Coming back later, or
+  running your own PeerServer, avoids this.
 
 [1]: https://github.com/predatorray/rendezvous/blob/main/LICENSE
 [2]: https://github.com/predatorray/rendezvous/actions/workflows/ci.yml
