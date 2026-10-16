@@ -76,6 +76,15 @@ export function useMeeting({
 
   const clientRef = useRef<MeetingClient | null>(null);
   const startedRef = useRef(false);
+  const localStreamRef = useRef<MediaStream | null>(null);
+
+  // The page can stay mounted after the meeting ends (ended/error screens),
+  // so release the camera and mic explicitly instead of relying on unmount.
+  const stopLocalMedia = useCallback(() => {
+    localStreamRef.current?.getTracks().forEach((track) => track.stop());
+    localStreamRef.current = null;
+    setLocalStream(null);
+  }, []);
 
   useEffect(() => {
     if (startedRef.current) return;
@@ -131,6 +140,7 @@ export function useMeeting({
     );
     unsubs.push(
       client.on('ended', (reason, detail) => {
+        stopLocalMedia();
         if (reason === 'error') {
           setErrorMessage(detail ?? t.meeting_error_default);
           setPhase('error');
@@ -147,6 +157,7 @@ export function useMeeting({
         stream?.getTracks().forEach((t) => t.stop());
         return;
       }
+      localStreamRef.current = stream;
       setLocalStream(stream);
       const initialAudio = stream?.getAudioTracks()[0]?.enabled ?? false;
       const initialVideo = stream?.getVideoTracks()[0]?.enabled ?? false;
@@ -159,6 +170,7 @@ export function useMeeting({
       } catch (e: any) {
         if (cancelled) return;
         console.error('Meeting start failed', e);
+        stopLocalMedia();
         const detail =
           e?.type === 'unavailable-id'
             ? t.meeting_error_unavailable_id
@@ -176,7 +188,8 @@ export function useMeeting({
       try {
         client.leave();
       } catch {}
-      localStream?.getTracks().forEach((t) => t.stop());
+      localStreamRef.current?.getTracks().forEach((t) => t.stop());
+      localStreamRef.current = null;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
