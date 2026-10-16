@@ -16,19 +16,15 @@ permissions:
   pull-requests: write
   actions: read
 
-concurrency:
-  # Shared with publish.yml and preview-cleanup.yml so pushes to gh-pages
-  # never race each other.
-  group: gh-pages
-  cancel-in-progress: false
-
 jobs:
-  deploy:
-    name: deploy preview
+  verify:
+    name: verify PR
     if: >-
       github.event.workflow_run.event == 'pull_request' &&
       github.event.workflow_run.conclusion == 'success'
     runs-on: ubuntu-latest
+    outputs:
+      number: ${{ steps.pr.outputs.number }}
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -40,8 +36,9 @@ jobs:
       - name: Verify PR
         id: pr
         # The PR number comes from the artifact, so it is untrusted: check it
-        # is a number, and that the PR is open and its head is the exact
-        # commit phase 1 built.
+        # is a number and that the PR's head is the exact commit phase 1
+        # built. A head that has since moved means a newer build is coming,
+        # so this one is skipped rather than failed.
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
@@ -52,59 +49,99 @@ jobs:
             echo "::error::Invalid PR number in artifact"
             exit 1
           fi
-          read -r state sha < <(gh api "repos/$GITHUB_REPOSITORY/pulls/$number" --jq '"\(.state) \(.head.sha)"')
+          sha="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$number" --jq .head.sha)"
           if [ "$sha" != "$HEAD_SHA" ]; then
-            echo "::error::PR #$number head ($sha) does not match the built commit ($HEAD_SHA)"
-            exit 1
-          fi
-          if [ "$state" != "open" ]; then
-            echo "PR #$number is $state, skipping deployment"
-            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "PR #$number head moved to $sha, skipping stale build of $HEAD_SHA"
             exit 0
           fi
           echo "number=$number" >> "$GITHUB_OUTPUT"
 
+  deploy:
+    name: deploy preview
+    needs: verify
+    if: needs.verify.outputs.number != ''
+    runs-on: ubuntu-latest
+    # Per PR and shared with preview-cleanup.yml. GitHub keeps only one pending
+    # run per group, so a shared group across PRs (or with publish.yml) could
+    # silently drop runs. Pushes from other PRs are handled by the retry loop.
+    concurrency:
+      group: gh-pages-pr-${{ needs.verify.outputs.number }}
+      cancel-in-progress: false
+    steps:
+      - name: Check PR is still open
+        id: state
+        # Re-checked here because the PR may have been closed while this job
+        # was waiting for the concurrency group. In that case the preview is
+        # removed instead, in case this run replaced a pending cleanup.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUMBER: ${{ needs.verify.outputs.number }}
+        run: |
+          state="$(gh api "repos/$GITHUB_REPOSITORY/pulls/$NUMBER" --jq .state)"
+          echo "state=$state" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/download-artifact@v4
+        if: steps.state.outputs.state == 'open'
+        with:
+          name: preview
+          path: ${{ runner.temp }}/preview
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
       - uses: actions/checkout@v4
-        if: steps.pr.outputs.skip != 'true'
         with:
           ref: gh-pages
           path: gh-pages
 
       - name: Publish to gh-pages
-        if: steps.pr.outputs.skip != 'true'
         env:
-          NUMBER: ${{ steps.pr.outputs.number }}
+          NUMBER: ${{ needs.verify.outputs.number }}
+          STATE: ${{ steps.state.outputs.state }}
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
           PREVIEW_DIR: ${{ runner.temp }}/preview
         working-directory: gh-pages
         run: |
           dest="pr-preview/pr-$NUMBER"
-          # Drop symlinks and any .git dir from the untrusted artifact.
-          find "$PREVIEW_DIR/site" -type l -delete
-          rm -rf "$dest"
-          mkdir -p "$dest"
-          cp -R "$PREVIEW_DIR/site/." "$dest/"
-          rm -rf "$dest/.git"
+          if [ "$STATE" = "open" ]; then
+            # Drop symlinks and any .git dir from the untrusted artifact.
+            find "$PREVIEW_DIR/site" -type l -delete
+            rm -rf "$dest"
+            mkdir -p "$dest"
+            cp -R "$PREVIEW_DIR/site/." "$dest/"
+            rm -rf "$dest/.git"
+            message="Deploy preview for PR #$NUMBER ($HEAD_SHA)"
+          elif [ -d "$dest" ]; then
+            echo "PR #$NUMBER is $STATE, removing its preview"
+            rm -rf "$dest"
+            message="Remove preview for PR #$NUMBER"
+          else
+            echo "PR #$NUMBER is $STATE, nothing to deploy"
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A "$dest"
           if git diff --cached --quiet; then
-            echo "No changes to deploy"
+            echo "No changes to push"
             exit 0
           fi
-          git commit -q -m "Deploy preview for PR #$NUMBER ($HEAD_SHA)"
+          git commit -q -m "$message"
           for i in 1 2 3 4; do
             git push origin gh-pages && exit 0
             sleep $((2 ** i))
-            git pull --rebase origin gh-pages
+            git pull --rebase origin gh-pages || {
+              git rebase --abort
+              echo "::error::Rebase onto gh-pages failed"
+              exit 1
+            }
           done
           exit 1
 
       - name: Comment preview link
-        if: steps.pr.outputs.skip != 'true'
+        if: steps.state.outputs.state == 'open'
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NUMBER: ${{ steps.pr.outputs.number }}
+          NUMBER: ${{ needs.verify.outputs.number }}
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           url="https://www.predatorray.me/rendezvous/pr-preview/pr-$NUMBER/"

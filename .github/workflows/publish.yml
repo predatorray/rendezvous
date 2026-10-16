@@ -10,8 +10,10 @@ permissions:
   contents: write
 
 concurrency:
-  # Shared with the PR preview workflows so pushes to gh-pages never race.
-  group: gh-pages
+  # Own group (not shared with the PR preview workflows), so only an older
+  # pending publish is ever replaced, by a newer one. Concurrent preview
+  # pushes are handled by force: false below.
+  group: publish
   cancel-in-progress: false
 
 jobs:

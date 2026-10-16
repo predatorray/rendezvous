@@ -46,8 +46,10 @@ jobs:
           # default ICE servers.
           REACT_APP_METERED_API_KEY: ${{ secrets.METERED_API_KEY }}
       - name: Check Google Analytics is not included
+        # Looks for a substituted measurement ID rather than the loader code,
+        # so it doesn't depend on the minifier stripping the inert loader.
         run: |
-          if grep -q googletagmanager build/index.html; then
+          if grep -qE 'G-[A-Z0-9]{6,}' build/index.html; then
             echo "::error::Preview build must not include Google Analytics"
             exit 1
           fi

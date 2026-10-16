@@ -13,7 +13,9 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: gh-pages
+  # Per PR and shared with the deploy job in preview-deploy.yml. Pushes from
+  # other PRs are handled by the retry loop below.
+  group: gh-pages-pr-${{ github.event.pull_request.number }}
   cancel-in-progress: false
 
 jobs:
@@ -44,7 +46,11 @@ jobs:
           for i in 1 2 3 4; do
             git push origin gh-pages && { echo "removed=true" >> "$GITHUB_OUTPUT"; exit 0; }
             sleep $((2 ** i))
-            git pull --rebase origin gh-pages
+            git pull --rebase origin gh-pages || {
+              git rebase --abort
+              echo "::error::Rebase onto gh-pages failed"
+              exit 1
+            }
           done
           exit 1
 
