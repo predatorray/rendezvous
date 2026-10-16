@@ -9,6 +9,11 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  # Shared with the PR preview workflows so pushes to gh-pages never race.
+  group: gh-pages
+  cancel-in-progress: false
+
 jobs:
   build:
     name: deploy
@@ -20,10 +25,16 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Deploy with gh-pages
-        run: |
-          git remote set-url origin https://git:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
-          npm run deploy -- -u "github-actions-bot <support+actions@github.com>"
+      - run: npm run build
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REACT_APP_METERED_API_KEY: ${{ secrets.METERED_API_KEY }}
+      - name: Deploy to gh-pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: build
+          branch: gh-pages
+          # Keep PR previews (managed by preview-deploy.yml / preview-cleanup.yml).
+          clean-exclude: |
+            pr-preview/
+          # Rebase onto concurrent preview deployments instead of overwriting them.
+          force: false
