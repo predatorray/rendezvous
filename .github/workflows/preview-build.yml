@@ -1,0 +1,65 @@
+name: PR Preview Build
+
+# Phase 1 of the PR preview: builds the PR's code with no write access and no
+# deploy rights, then hands the static site to preview-deploy.yml as an artifact.
+#
+# For fork PRs from external contributors, this only runs after a maintainer
+# clicks "Approve and run" (Settings → Actions → General → "Require approval
+# for all external contributors"), so the approval also gates the deployment.
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: preview-build-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: build preview
+    # Dependabot runs get a read-only token in phase 2 too, so they can't deploy.
+    if: github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build for /pr-preview/pr-${{ github.event.pull_request.number }}
+        # REACT_APP_GA_ID is set to empty inline so previews never load Google
+        # Analytics (it overrides the value in .env.production).
+        run: REACT_APP_GA_ID='' npm run build
+        env:
+          PUBLIC_URL: /rendezvous/pr-preview/pr-${{ github.event.pull_request.number }}
+          REACT_APP_SITE_URL: https://www.predatorray.me/rendezvous/pr-preview/pr-${{ github.event.pull_request.number }}
+          # Empty for fork PRs (no secrets), which falls back to PeerJS's
+          # default ICE servers.
+          REACT_APP_METERED_API_KEY: ${{ secrets.METERED_API_KEY }}
+      - name: Check Google Analytics is not included
+        # Looks for a substituted measurement ID rather than the loader code,
+        # so it doesn't depend on the minifier stripping the inert loader.
+        run: |
+          if grep -qE 'G-[A-Z0-9]{6,}' build/index.html; then
+            echo "::error::Preview build must not include Google Analytics"
+            exit 1
+          fi
+      - name: Package preview
+        run: |
+          mkdir -p preview
+          mv build preview/site
+          echo "${{ github.event.pull_request.number }}" > preview/pr-number
+      - uses: actions/upload-artifact@v4
+        with:
+          name: preview
+          path: preview/
+          retention-days: 1

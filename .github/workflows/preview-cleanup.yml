@@ -1,0 +1,68 @@
+name: PR Preview Cleanup
+
+# Removes gh-pages/pr-preview/pr-<number>/ when a PR is closed or merged.
+# pull_request_target is needed so fork PRs get a write token; this is safe
+# because it never checks out or runs any code from the PR.
+
+on:
+  pull_request_target:
+    types: [closed]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  # Per PR and shared with the deploy job in preview-deploy.yml. Pushes from
+  # other PRs are handled by the retry loop below.
+  group: gh-pages-pr-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  cleanup:
+    name: remove preview
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: gh-pages
+
+      - name: Remove preview from gh-pages
+        id: remove
+        env:
+          NUMBER: ${{ github.event.pull_request.number }}
+        working-directory: gh-pages
+        run: |
+          dest="pr-preview/pr-$NUMBER"
+          if [ ! -d "$dest" ]; then
+            echo "No preview to remove"
+            exit 0
+          fi
+          git rm -rq "$dest"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -q -m "Remove preview for PR #$NUMBER"
+          for i in 1 2 3 4; do
+            git push origin gh-pages && { echo "removed=true" >> "$GITHUB_OUTPUT"; exit 0; }
+            sleep $((2 ** i))
+            git pull --rebase origin gh-pages || {
+              git rebase --abort
+              echo "::error::Rebase onto gh-pages failed"
+              exit 1
+            }
+          done
+          exit 1
+
+      - name: Update preview comment
+        if: steps.remove.outputs.removed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUMBER: ${{ github.event.pull_request.number }}
+        run: |
+          id="$(gh api "repos/$GITHUB_REPOSITORY/issues/$NUMBER/comments" --paginate \
+            --jq '.[] | select(.user.login == "github-actions[bot]" and (.body | startswith("<!-- pr-preview -->"))) | .id' | head -n1)"
+          if [ -n "$id" ]; then
+            gh api -X PATCH "repos/$GITHUB_REPOSITORY/issues/comments/$id" \
+              -f body="$(printf '%s\n' '<!-- pr-preview -->' '🧹 Preview removed because this PR was closed.')" > /dev/null
+          fi
