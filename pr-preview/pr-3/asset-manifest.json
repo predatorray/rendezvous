@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/rendezvous/pr-preview/pr-3/static/css/main.03cc0874.css",
+    "main.js": "/rendezvous/pr-preview/pr-3/static/js/main.87e86655.js",
+    "index.html": "/rendezvous/pr-preview/pr-3/index.html",
+    "main.03cc0874.css.map": "/rendezvous/pr-preview/pr-3/static/css/main.03cc0874.css.map",
+    "main.87e86655.js.map": "/rendezvous/pr-preview/pr-3/static/js/main.87e86655.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.03cc0874.css",
+    "static/js/main.87e86655.js"
+  ]
+}
