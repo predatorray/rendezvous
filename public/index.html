@@ -49,14 +49,24 @@
       Learn how to configure a non-root public URL by running `npm run build`.
     -->
     <title>Rendezvous</title>
-    <!-- Google tag (gtag.js) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-L57H5KXBTX"></script>
+    <!--
+      Google tag (gtag.js). Only loaded when REACT_APP_GA_ID is set at build
+      time (see .env.production), so dev servers, e2e runs and PR previews
+      don't report to Google Analytics.
+    -->
     <script>
-      window.dataLayer = window.dataLayer || [];
-      function gtag(){dataLayer.push(arguments);}
-      gtag('js', new Date());
-
-      gtag('config', 'G-L57H5KXBTX');
+      (function () {
+        var id = '%REACT_APP_GA_ID%';
+        if (!id || id.charAt(0) === '%') return;
+        var s = document.createElement('script');
+        s.async = true;
+        s.src = 'https://www.googletagmanager.com/gtag/js?id=' + id;
+        document.head.appendChild(s);
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = function () { window.dataLayer.push(arguments); };
+        window.gtag('js', new Date());
+        window.gtag('config', id);
+      })();
     </script>
   </head>
   <body>
