@@ -42,6 +42,14 @@ const ru = {
   meeting_ended_self: 'Вы покинули встречу',
   meeting_ended_kicked: 'Организатор удалил вас из встречи',
 
+  feedback_title: 'Как прошла встреча?',
+  feedback_good: 'Хорошо',
+  feedback_bad: 'Плохо',
+  feedback_comment_placeholder: 'Есть комментарии? (необязательно)',
+  feedback_github_hint: 'Ваш комментарий откроет обсуждение на GitHub в новой вкладке.',
+  feedback_submit: 'Отправить',
+  feedback_thanks: 'Спасибо за отзыв!',
+
   meeting_share_invite_aria: 'Поделиться приглашением',
   meeting_person: 'участник',
   meeting_people: 'участников',

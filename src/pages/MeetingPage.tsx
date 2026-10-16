@@ -8,6 +8,7 @@ import {
 } from '@mui/material';
 import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import MeetingRoom from '../components/MeetingRoom';
+import MeetingFeedback from '../components/MeetingFeedback';
 import { useMeeting } from '../peer/useMeeting';
 import { useIsSpeaking } from '../peer/useIsSpeaking';
 import { displayMeetingCode, isValidMeetingCode } from '../util/code';
@@ -154,6 +155,9 @@ function LiveMeeting({
             ? t.meeting_ended_kicked
             : t.meeting_ended_self}
         </Typography>
+        <Box sx={{ my: 3 }}>
+          <MeetingFeedback endedReason={meeting.endedReason} />
+        </Box>
         <Button variant="contained" onClick={() => navigate('/')}>
           {t.meeting_back_home}
         </Button>
@@ -178,10 +182,7 @@ function LiveMeeting({
       onToggleVideo={meeting.toggleVideo}
       onSendChat={meeting.sendChat}
       onKick={meeting.kick}
-      onLeave={() => {
-        meeting.leave();
-        navigate('/');
-      }}
+      onLeave={meeting.leave}
     />
   );
 }

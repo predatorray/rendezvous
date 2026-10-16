@@ -41,6 +41,14 @@ const ko = {
   meeting_ended_self: '회의에서 나갔습니다',
   meeting_ended_kicked: '호스트에 의해 회의에서 내보내졌습니다',
 
+  feedback_title: '회의는 어떠셨나요?',
+  feedback_good: '좋음',
+  feedback_bad: '나쁨',
+  feedback_comment_placeholder: '의견이 있으신가요? (선택)',
+  feedback_github_hint: '의견은 새 탭에서 GitHub 토론으로 열립니다.',
+  feedback_submit: '제출',
+  feedback_thanks: '피드백 감사합니다!',
+
   meeting_share_invite_aria: '초대 공유',
   meeting_person: '명',
   meeting_people: '명',

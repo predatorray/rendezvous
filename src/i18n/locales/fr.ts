@@ -41,6 +41,14 @@ const fr = {
   meeting_ended_self: 'Vous avez quitté la réunion',
   meeting_ended_kicked: 'Vous avez été retiré de la réunion par l’hôte',
 
+  feedback_title: 'Comment s’est passée votre réunion ?',
+  feedback_good: 'Bien',
+  feedback_bad: 'Mauvais',
+  feedback_comment_placeholder: 'Des commentaires ? (facultatif)',
+  feedback_github_hint: 'Votre commentaire ouvrira une discussion GitHub dans un nouvel onglet.',
+  feedback_submit: 'Envoyer',
+  feedback_thanks: 'Merci pour votre retour !',
+
   meeting_share_invite_aria: 'Partager l’invitation',
   meeting_person: 'personne',
   meeting_people: 'personnes',

@@ -41,6 +41,14 @@ const pt = {
   meeting_ended_self: 'Você saiu da reunião',
   meeting_ended_kicked: 'Você foi removido da reunião pelo anfitrião',
 
+  feedback_title: 'Como foi sua reunião?',
+  feedback_good: 'Boa',
+  feedback_bad: 'Ruim',
+  feedback_comment_placeholder: 'Algum comentário? (opcional)',
+  feedback_github_hint: 'Seu comentário abrirá uma discussão no GitHub em uma nova aba.',
+  feedback_submit: 'Enviar',
+  feedback_thanks: 'Obrigado pelo seu feedback!',
+
   meeting_share_invite_aria: 'Compartilhar convite',
   meeting_person: 'pessoa',
   meeting_people: 'pessoas',
