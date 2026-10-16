@@ -166,6 +166,8 @@ test.describe('Two peers (host + guest)', () => {
     await expect(
       guest.page.getByRole('button', { name: 'Back to home' }),
     ).toBeVisible();
+    await expect(guest.page.getByText('How was your meeting?')).toBeVisible();
+    await expect(host.page.getByText('How was your meeting?')).toBeVisible();
 
     await host.context.close();
     await guest.context.close();

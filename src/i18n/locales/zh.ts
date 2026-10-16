@@ -40,6 +40,14 @@ const zh = {
   meeting_ended_self: '你已离开会议',
   meeting_ended_kicked: '你已被主持人移出会议',
 
+  feedback_title: '这次会议体验如何？',
+  feedback_good: '好',
+  feedback_bad: '不好',
+  feedback_comment_placeholder: '有什么想说的吗？（可选）',
+  feedback_github_hint: '你的评论将在新标签页中打开一个 GitHub 讨论。',
+  feedback_submit: '提交',
+  feedback_thanks: '感谢你的反馈！',
+
   meeting_share_invite_aria: '分享邀请',
   meeting_person: '人',
   meeting_people: '人',

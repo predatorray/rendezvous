@@ -41,6 +41,14 @@ const ja = {
   meeting_ended_self: 'ミーティングを退出しました',
   meeting_ended_kicked: 'ホストによってミーティングから退出させられました',
 
+  feedback_title: 'ミーティングはいかがでしたか？',
+  feedback_good: '良い',
+  feedback_bad: '悪い',
+  feedback_comment_placeholder: 'コメントはありますか？（任意）',
+  feedback_github_hint: 'コメントは新しいタブで GitHub ディスカッションとして開かれます。',
+  feedback_submit: '送信',
+  feedback_thanks: 'フィードバックありがとうございます！',
+
   meeting_share_invite_aria: '招待を共有',
   meeting_person: '人',
   meeting_people: '人',
