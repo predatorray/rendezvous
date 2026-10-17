@@ -125,16 +125,24 @@ export class MeetingClient {
   // Metrics state.
   private metrics: MetricsCollector;
   private liveAt: number | null = null; // when the meeting went live for us
+  private wentLive = false; // never reset, so a meeting goes live only once
+  private hasEnded = false;
   private guestIds = new Set<string>(); // host-only: guests that ever joined
   private peakParticipants = 0;
-  private onPageHide = () => this.reportMeetingEnded('page-closed');
+  private onPageHide = (event: PageTransitionEvent) => {
+    // A page entering the back/forward cache keeps its meeting alive.
+    if (event.persisted) return;
+    this.reportMeetingEnded('page-closed');
+  };
 
   constructor({ code, name, isHost, metrics }: ConstructorArgs) {
     this.code = code;
     this.name = name;
     this.isHost = isHost;
     this.hostId = peerIdForMeeting(code);
-    this.metrics = safeMetricsCollector(metrics ?? createMetricsCollector());
+    this.metrics = metrics
+      ? safeMetricsCollector(metrics)
+      : createMetricsCollector();
   }
 
   on<K extends EventName>(event: K, handler: Listener<K>): () => void {
@@ -514,7 +522,7 @@ export class MeetingClient {
       console.error('Client peer error', err);
       this.reportConnectionError('peer', err);
       // PeerJS surfaces peer-unavailable when host id doesn't exist.
-      if ((err as any).type === 'peer-unavailable') {
+      if ((err as any)?.type === 'peer-unavailable') {
         this.emitEnded('error', 'Meeting not found.');
         this.shutdown();
       }
@@ -555,7 +563,7 @@ export class MeetingClient {
         // Track host id (it might differ from the static derived one in edge
         // cases; trust what host says).
         this.hostId = msg.hostId;
-        if (this.liveAt === null) {
+        if (!this.wentLive && !this.hasEnded) {
           this.markLive();
           this.trackParticipants(msg.members.length);
           this.metrics.guestJoined({ participantCount: msg.members.length });
@@ -630,6 +638,7 @@ export class MeetingClient {
   }
 
   private markLive(): void {
+    this.wentLive = true;
     this.liveAt = Date.now();
     // Closing the tab never calls leave(), so report the duration on pagehide.
     try {
@@ -645,6 +654,9 @@ export class MeetingClient {
     reason: Exclude<MeetingEndReason, 'page-closed'>,
     detail?: string
   ): void {
+    // end, kick and the data connection's close can all fire for one meeting.
+    if (this.hasEnded) return;
+    this.hasEnded = true;
     this.reportMeetingEnded(reason);
     if (detail === undefined) this.emit('ended', reason);
     else this.emit('ended', reason, detail);
@@ -655,9 +667,7 @@ export class MeetingClient {
     if (this.liveAt === null) return;
     const durationMs = Date.now() - this.liveAt;
     this.liveAt = null;
-    try {
-      window.removeEventListener('pagehide', this.onPageHide);
-    } catch {}
+    this.removePageHideListener();
     this.metrics.meetingEnded({
       role: this.role,
       reason,
@@ -665,6 +675,12 @@ export class MeetingClient {
       peakParticipants: this.peakParticipants,
       ...(this.isHost ? { guestCount: this.guestIds.size } : {}),
     });
+  }
+
+  private removePageHideListener(): void {
+    try {
+      window.removeEventListener('pagehide', this.onPageHide);
+    } catch {}
   }
 
   private reportConnectionError(
@@ -686,6 +702,7 @@ export class MeetingClient {
   // ---- Teardown ----
 
   private shutdown(): void {
+    this.removePageHideListener();
     try {
       this.peer?.destroy();
     } catch {}

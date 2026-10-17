@@ -35,11 +35,13 @@ export function categorizeConnectionError(
   err: unknown,
   fallback: ConnectionErrorCategory = 'unknown'
 ): ConnectionErrorCategory {
-  const e = err as { type?: unknown; name?: unknown } | null | undefined;
-  if (e && typeof e.type === 'string' && CATEGORY_BY_TYPE[e.type]) {
+  const e = err as { type?: unknown } | null | undefined;
+  if (
+    e &&
+    typeof e.type === 'string' &&
+    Object.prototype.hasOwnProperty.call(CATEGORY_BY_TYPE, e.type)
+  ) {
     return CATEGORY_BY_TYPE[e.type];
   }
-  // fetch() rejects with a TypeError when the network is unreachable.
-  if (e && e.name === 'TypeError') return 'network';
   return fallback;
 }

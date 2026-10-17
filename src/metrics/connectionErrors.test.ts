@@ -20,11 +20,19 @@ describe('categorizeConnectionError', () => {
     expect(categorizeConnectionError({ type })).toBe(category);
   });
 
-  it('treats fetch TypeErrors as network errors', () => {
-    expect(categorizeConnectionError(new TypeError('Failed to fetch'))).toBe(
-      'network'
+  it('leaves errors without a PeerJS type to the caller fallback', () => {
+    expect(categorizeConnectionError(new TypeError('x'))).toBe('unknown');
+    expect(categorizeConnectionError(new TypeError('x'), 'webrtc')).toBe(
+      'webrtc'
     );
   });
+
+  it.each(['constructor', 'toString', '__proto__', 'hasOwnProperty'])(
+    'ignores inherited key %s',
+    (type) => {
+      expect(categorizeConnectionError({ type }, 'webrtc')).toBe('webrtc');
+    }
+  );
 
   it('falls back for unknown or empty errors', () => {
     expect(categorizeConnectionError({ type: 'weird' })).toBe('unknown');

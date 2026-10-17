@@ -1,11 +1,13 @@
 import { MetricsCollector } from './MetricsCollector';
 
-const METHODS: Array<keyof MetricsCollector> = [
-  'meetingStarted',
-  'guestJoined',
-  'meetingEnded',
-  'connectionError',
-];
+// A Record keyed by the interface, so adding a metric without listing it
+// here is a type error.
+const METHODS: Record<keyof MetricsCollector, true> = {
+  meetingStarted: true,
+  guestJoined: true,
+  meetingEnded: true,
+  connectionError: true,
+};
 
 /**
  * Wraps a collector so that publishing can never break the caller: missing
@@ -13,7 +15,7 @@ const METHODS: Array<keyof MetricsCollector> = [
  */
 export function safeMetricsCollector(inner: MetricsCollector): MetricsCollector {
   const safe = {} as Record<keyof MetricsCollector, (metric: any) => void>;
-  METHODS.forEach((method) => {
+  (Object.keys(METHODS) as Array<keyof MetricsCollector>).forEach((method) => {
     safe[method] = (metric) => {
       try {
         const fn = (inner as any)?.[method];

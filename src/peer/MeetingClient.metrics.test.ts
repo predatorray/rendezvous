@@ -135,6 +135,19 @@ describe('MeetingClient metrics', () => {
       expect(metrics.meetingEnded).toHaveBeenCalledTimes(1);
     });
 
+    it('ignores pagehide into the back/forward cache', async () => {
+      const metrics = makeMetrics();
+      const { client } = await startHost(metrics);
+      const event = new Event('pagehide');
+      Object.defineProperty(event, 'persisted', { value: true });
+      window.dispatchEvent(event);
+      expect(metrics.meetingEnded).not.toHaveBeenCalled();
+      client.leave();
+      expect(metrics.meetingEnded).toHaveBeenCalledWith(
+        expect.objectContaining({ reason: 'self-left' })
+      );
+    });
+
     it('reports page-closed when the tab is closed mid-meeting', async () => {
       const metrics = makeMetrics();
       await startHost(metrics);
@@ -241,6 +254,41 @@ describe('MeetingClient metrics', () => {
         durationMs: 42_000,
         peakParticipants: 4,
       });
+    });
+
+    it('ignores a late welcome after the meeting ended', async () => {
+      const metrics = makeMetrics();
+      const { dc } = await startGuest(metrics);
+      dc.fakeOpen();
+      dc.fakeData(welcome(2));
+      dc.fakeData({ type: 'end' });
+      dc.fakeData(welcome(2));
+      window.dispatchEvent(new Event('pagehide'));
+      expect(metrics.guestJoined).toHaveBeenCalledTimes(1);
+      expect(metrics.meetingEnded).toHaveBeenCalledTimes(1);
+    });
+
+    it('emits ended once when the connection closes after a kick', async () => {
+      const metrics = makeMetrics();
+      const ended = jest.fn();
+      const { client, dc } = await startGuest(metrics);
+      client.on('ended', ended);
+      dc.fakeOpen();
+      dc.fakeData(welcome(2));
+      dc.fakeData({ type: 'kick', peerId: 'me' });
+      dc.close();
+      expect(ended).toHaveBeenCalledTimes(1);
+      expect(ended).toHaveBeenCalledWith('kicked');
+      expect(metrics.meetingEnded).toHaveBeenCalledTimes(1);
+    });
+
+    it('tolerates a null peer error', async () => {
+      const metrics = makeMetrics();
+      const { peer } = await startGuest(metrics);
+      expect(() => peer.fakeError(null)).not.toThrow();
+      expect(metrics.connectionError).toHaveBeenCalledWith(
+        expect.objectContaining({ category: 'unknown', errorType: 'unknown' })
+      );
     });
 
     it('reports host-left when the data connection closes', async () => {
