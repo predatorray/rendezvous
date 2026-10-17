@@ -11,6 +11,16 @@ import {
   peerIdForMeeting,
   randomClientPeerId,
 } from '../util/code';
+import {
+  categorizeConnectionError,
+  ConnectionErrorCategory,
+  ConnectionErrorStage,
+  createMetricsCollector,
+  errorTypeOf,
+  MeetingEndReason,
+  MetricsCollector,
+  safeMetricsCollector,
+} from '../metrics';
 
 /**
  * Event payloads for subscribers.
@@ -47,7 +57,9 @@ const METERED_API_KEY = process.env.REACT_APP_METERED_API_KEY;
  * (NODE_ENV=test) and e2e tests (CRA dev server, NODE_ENV=development) fall
  * back to PeerJS's built-in default ICE servers by returning null.
  */
-async function fetchIceServers(): Promise<RTCIceServer[] | null> {
+async function fetchIceServers(
+  onError: (err: unknown) => void
+): Promise<RTCIceServer[] | null> {
   if (process.env.NODE_ENV !== 'production' || !METERED_API_KEY) {
     return null;
   }
@@ -56,11 +68,15 @@ async function fetchIceServers(): Promise<RTCIceServer[] | null> {
       `${METERED_CREDENTIALS_URL}?apiKey=${METERED_API_KEY}`
     );
     if (!response.ok) {
-      throw new Error(`metered.ca responded with ${response.status}`);
+      throw Object.assign(
+        new Error(`metered.ca responded with ${response.status}`),
+        { type: 'server-error' }
+      );
     }
     return (await response.json()) as RTCIceServer[];
   } catch (e) {
     console.error('Failed to fetch ICE servers from metered.ca', e);
+    onError(e);
     return null;
   }
 }
@@ -69,6 +85,8 @@ interface ConstructorArgs {
   code: string;
   name: string;
   isHost: boolean;
+  /** Defaults to Google Analytics when gtag is loaded, else a no-op. */
+  metrics?: MetricsCollector;
 }
 
 interface MetadataPayload {
@@ -104,11 +122,27 @@ export class MeetingClient {
 
   private listeners: { [K in EventName]?: Set<Listener<K>> } = {};
 
-  constructor({ code, name, isHost }: ConstructorArgs) {
+  // Metrics state.
+  private metrics: MetricsCollector;
+  private liveAt: number | null = null; // when the meeting went live for us
+  private wentLive = false; // never reset, so a meeting goes live only once
+  private hasEnded = false;
+  private guestIds = new Set<string>(); // host-only: guests that ever joined
+  private peakParticipants = 0;
+  private onPageHide = (event: PageTransitionEvent) => {
+    // A page entering the back/forward cache keeps its meeting alive.
+    if (event.persisted) return;
+    this.reportMeetingEnded('page-closed');
+  };
+
+  constructor({ code, name, isHost, metrics }: ConstructorArgs) {
     this.code = code;
     this.name = name;
     this.isHost = isHost;
     this.hostId = peerIdForMeeting(code);
+    this.metrics = metrics
+      ? safeMetricsCollector(metrics)
+      : createMetricsCollector();
   }
 
   on<K extends EventName>(event: K, handler: Listener<K>): () => void {
@@ -144,7 +178,9 @@ export class MeetingClient {
     this.videoEnabled = stream?.getVideoTracks()[0]?.enabled ?? false;
 
     const peerId = this.isHost ? this.hostId : randomClientPeerId(this.code);
-    const iceServers = await fetchIceServers();
+    const iceServers = await fetchIceServers((e) =>
+      this.reportConnectionError('ice-servers', e, 'network')
+    );
     this.peer = new Peer(peerId, {
       debug: 1,
       ...(iceServers ? { config: { iceServers } } : {}),
@@ -159,6 +195,7 @@ export class MeetingClient {
       };
       const onErr = (err: any) => {
         peer.off('open', onOpen);
+        this.reportConnectionError('start', err);
         reject(err);
       };
       peer.once('open', onOpen);
@@ -168,6 +205,8 @@ export class MeetingClient {
     this.emit('ready', this.selfId);
 
     if (this.isHost) {
+      this.markLive();
+      this.metrics.meetingStarted({ role: 'host' });
       this.startAsHost();
     } else {
       this.startAsClient();
@@ -184,7 +223,7 @@ export class MeetingClient {
       } catch {}
     }
     this.shutdown();
-    this.emit('ended', 'self-left');
+    this.emitEnded('self-left');
   }
 
   sendChat(text: string): void {
@@ -257,6 +296,7 @@ export class MeetingClient {
     peer.on('call', (call) => this.handleIncomingCallAsHost(call));
     peer.on('error', (err) => {
       console.error('Host peer error', err);
+      this.reportConnectionError('peer', err);
     });
     peer.on('disconnected', () => {
       // Try to reconnect — PeerJS broker pings.
@@ -275,7 +315,10 @@ export class MeetingClient {
       this.handleMessageFromClient(conn, msg);
     });
     conn.on('close', () => this.handleClientGone(conn.peer));
-    conn.on('error', () => this.handleClientGone(conn.peer));
+    conn.on('error', (err) => {
+      this.reportConnectionError('data-connection', err, 'webrtc');
+      this.handleClientGone(conn.peer);
+    });
   }
 
   private handleMessageFromClient(conn: DataConnection, msg: WireMessage): void {
@@ -289,6 +332,7 @@ export class MeetingClient {
           isHost: false,
         };
         this.members.set(conn.peer, member);
+        this.guestIds.add(conn.peer);
         const joinSys: SystemMessage = {
           id: newMessageId(),
           text: `${member.name} joined`,
@@ -379,7 +423,10 @@ export class MeetingClient {
       this.remoteStreams.delete(ownerId);
       this.emit('remoteStreamRemoved', ownerId);
     });
-    call.on('error', (e) => console.error('host call error', e));
+    call.on('error', (e) => {
+      console.error('host call error', e);
+      this.reportConnectionError('media-call', e, 'webrtc');
+    });
   }
 
   /**
@@ -416,7 +463,10 @@ export class MeetingClient {
       if (remaining.length) this.mediaConns.set(targetPeerId, remaining);
       else this.mediaConns.delete(targetPeerId);
     });
-    call.on('error', (e) => console.error('host outbound call error', e));
+    call.on('error', (e) => {
+      console.error('host outbound call error', e);
+      this.reportConnectionError('media-call', e, 'webrtc');
+    });
   }
 
   private tearDownMediaFor(peerId: string): void {
@@ -444,6 +494,7 @@ export class MeetingClient {
   }
 
   private emitMembers(): void {
+    this.trackParticipants(this.members.size);
     this.emit('members', Array.from(this.members.values()));
   }
 
@@ -469,9 +520,10 @@ export class MeetingClient {
     peer.on('call', (call) => this.handleIncomingCallAsClient(call));
     peer.on('error', (err) => {
       console.error('Client peer error', err);
+      this.reportConnectionError('peer', err);
       // PeerJS surfaces peer-unavailable when host id doesn't exist.
-      if ((err as any).type === 'peer-unavailable') {
-        this.emit('ended', 'error', 'Meeting not found.');
+      if ((err as any)?.type === 'peer-unavailable') {
+        this.emitEnded('error', 'Meeting not found.');
         this.shutdown();
       }
     });
@@ -496,11 +548,12 @@ export class MeetingClient {
     });
     dc.on('data', (raw) => this.handleMessageFromHost(raw as WireMessage));
     dc.on('close', () => {
-      this.emit('ended', 'host-left');
+      this.emitEnded('host-left');
       this.shutdown();
     });
     dc.on('error', (err) => {
       console.error('Host data conn error', err);
+      this.reportConnectionError('data-connection', err, 'webrtc');
     });
   }
 
@@ -510,22 +563,28 @@ export class MeetingClient {
         // Track host id (it might differ from the static derived one in edge
         // cases; trust what host says).
         this.hostId = msg.hostId;
+        if (!this.wentLive && !this.hasEnded) {
+          this.markLive();
+          this.trackParticipants(msg.members.length);
+          this.metrics.guestJoined({ participantCount: msg.members.length });
+        }
         this.emit('history', msg.timeline);
         this.emit('members', msg.members);
         break;
       }
       case 'roster':
+        this.trackParticipants(msg.members.length);
         this.emit('members', msg.members);
         break;
       case 'timeline':
         this.emit('timeline', msg.item);
         break;
       case 'end':
-        this.emit('ended', 'host-left');
+        this.emitEnded('host-left');
         this.shutdown();
         break;
       case 'kick':
-        this.emit('ended', 'kicked');
+        this.emitEnded('kicked');
         this.shutdown();
         break;
       default:
@@ -545,7 +604,10 @@ export class MeetingClient {
       this.remoteStreams.delete(ownerId);
       this.emit('remoteStreamRemoved', ownerId);
     });
-    call.on('error', (e) => console.error('client incoming call error', e));
+    call.on('error', (e) => {
+      console.error('client incoming call error', e);
+      this.reportConnectionError('media-call', e, 'webrtc');
+    });
   }
 
   private sendToHost(msg: WireMessage): void {
@@ -569,9 +631,78 @@ export class MeetingClient {
     });
   }
 
+  // ---- Metrics ----
+
+  private get role(): 'host' | 'guest' {
+    return this.isHost ? 'host' : 'guest';
+  }
+
+  private markLive(): void {
+    this.wentLive = true;
+    this.liveAt = Date.now();
+    // Closing the tab never calls leave(), so report the duration on pagehide.
+    try {
+      window.addEventListener('pagehide', this.onPageHide);
+    } catch {}
+  }
+
+  private trackParticipants(count: number): void {
+    this.peakParticipants = Math.max(this.peakParticipants, count);
+  }
+
+  private emitEnded(
+    reason: Exclude<MeetingEndReason, 'page-closed'>,
+    detail?: string
+  ): void {
+    // end, kick and the data connection's close can all fire for one meeting.
+    if (this.hasEnded) return;
+    this.hasEnded = true;
+    this.reportMeetingEnded(reason);
+    if (detail === undefined) this.emit('ended', reason);
+    else this.emit('ended', reason, detail);
+  }
+
+  /** Reports at most once per meeting, and only if it ever went live. */
+  private reportMeetingEnded(reason: MeetingEndReason): void {
+    if (this.liveAt === null) return;
+    const durationMs = Date.now() - this.liveAt;
+    this.liveAt = null;
+    this.removePageHideListener();
+    this.metrics.meetingEnded({
+      role: this.role,
+      reason,
+      durationMs,
+      peakParticipants: this.peakParticipants,
+      ...(this.isHost ? { guestCount: this.guestIds.size } : {}),
+    });
+  }
+
+  private removePageHideListener(): void {
+    try {
+      window.removeEventListener('pagehide', this.onPageHide);
+    } catch {}
+  }
+
+  private reportConnectionError(
+    stage: ConnectionErrorStage,
+    err: unknown,
+    fallback?: ConnectionErrorCategory
+  ): void {
+    // Inspecting an arbitrary error object must not break error handling.
+    try {
+      this.metrics.connectionError({
+        role: this.role,
+        stage,
+        category: categorizeConnectionError(err, fallback),
+        errorType: errorTypeOf(err),
+      });
+    } catch {}
+  }
+
   // ---- Teardown ----
 
   private shutdown(): void {
+    this.removePageHideListener();
     try {
       this.peer?.destroy();
     } catch {}
