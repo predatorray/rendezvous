@@ -30,6 +30,7 @@ const de = {
   meeting_starting: 'Meeting wird gestartet…',
   meeting_joining: 'Meeting wird beigetreten…',
 
+  meeting_dismiss_warning: "Warnung schließen",
   meeting_turn_unavailable: "Die zusätzliche Verbindungshilfe ist derzeit nicht verfügbar. Manche Personen können möglicherweise nicht teilnehmen oder Audio und Video übertragen. Für eine bessere Verbindung sollten alle ein anderes Netzwerk ausprobieren, etwa das WLAN zu Hause statt eines Firmen- oder öffentlichen Netzwerks, und ihr VPN nach Möglichkeit ausschalten. Treten Sie dann dem Meeting erneut bei.",
 
   meeting_error_title: 'Beitritt zum Meeting fehlgeschlagen',

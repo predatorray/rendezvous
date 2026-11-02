@@ -30,6 +30,7 @@ const en = {
   meeting_starting: 'Starting meeting…',
   meeting_joining: 'Joining meeting…',
 
+  meeting_dismiss_warning: "Dismiss warning",
   meeting_turn_unavailable: "Extra connection support is currently unavailable. Some people may have trouble joining or sharing audio and video. To improve your chances of connecting, ask everyone to try a different network, such as home Wi-Fi instead of a work or public network, and turn off their VPN if possible. Then rejoin the meeting.",
 
   meeting_error_title: 'Couldn’t join the meeting',

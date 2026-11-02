@@ -30,6 +30,7 @@ const zh = {
   meeting_starting: '正在开始会议…',
   meeting_joining: '正在加入会议…',
 
+  meeting_dismiss_warning: "关闭提示",
   meeting_turn_unavailable: "辅助连接服务目前不可用。部分用户可能无法加入会议或传输音视频。为了提高连接成功率，请大家尝试换一个网络，例如使用家庭 Wi-Fi 而非公司或公共网络，并在条件允许时关闭 VPN，然后重新加入会议。",
 
   meeting_error_title: '无法加入会议',

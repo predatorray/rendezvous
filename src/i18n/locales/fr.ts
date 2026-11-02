@@ -30,6 +30,7 @@ const fr = {
   meeting_starting: 'Démarrage de la réunion…',
   meeting_joining: 'Connexion à la réunion…',
 
+  meeting_dismiss_warning: "Fermer l’avertissement",
   meeting_turn_unavailable: "Le service supplémentaire d’aide à la connexion est actuellement indisponible. Certaines personnes peuvent avoir du mal à rejoindre la réunion ou à partager le son et la vidéo. Pour améliorer la connexion, demandez à chacun d’essayer un autre réseau, par exemple le Wi-Fi à domicile plutôt qu’un réseau professionnel ou public, et de désactiver son VPN si possible. Rejoignez ensuite la réunion.",
 
   meeting_error_title: 'Impossible de rejoindre la réunion',

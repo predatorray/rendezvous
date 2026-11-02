@@ -30,6 +30,7 @@ const es = {
   meeting_starting: 'Iniciando reunión…',
   meeting_joining: 'Uniéndose a la reunión…',
 
+  meeting_dismiss_warning: "Cerrar aviso",
   meeting_turn_unavailable: "La ayuda adicional para la conexión no está disponible en este momento. Algunas personas podrían tener problemas para unirse o compartir audio y vídeo. Para mejorar la conexión, pide a todos que prueben otra red, como la Wi-Fi de casa en lugar de una red de trabajo o pública, y que desactiven su VPN si es posible. Después, vuelvan a unirse a la reunión.",
 
   meeting_error_title: 'No se pudo unir a la reunión',

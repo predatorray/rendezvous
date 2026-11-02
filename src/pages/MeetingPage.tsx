@@ -113,8 +113,14 @@ function LiveMeeting({
   const meeting = useMeeting({ code, name, isHost });
   const isSpeaking = useIsSpeaking(meeting.localStream, meeting.audioEnabled);
 
-  const connectivityWarning = meeting.turnUnavailable ? (
-    <Alert severity="warning" sx={{ mb: 2, textAlign: 'left' }}>
+  const [warningDismissed, setWarningDismissed] = useState(false);
+  const connectivityWarning = meeting.turnUnavailable && !warningDismissed ? (
+    <Alert
+      severity="warning"
+      onClose={() => setWarningDismissed(true)}
+      closeText={t.meeting_dismiss_warning}
+      sx={{ mb: 2, textAlign: 'left' }}
+    >
       {t.meeting_turn_unavailable}
     </Alert>
   ) : null;

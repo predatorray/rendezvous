@@ -30,6 +30,7 @@ const pt = {
   meeting_starting: 'Iniciando a reunião…',
   meeting_joining: 'Entrando na reunião…',
 
+  meeting_dismiss_warning: "Dispensar aviso",
   meeting_turn_unavailable: "O serviço adicional de apoio à conexão está indisponível no momento. Algumas pessoas podem ter dificuldade para entrar ou compartilhar áudio e vídeo. Para melhorar a conexão, peça a todos que tentem outra rede, como o Wi-Fi de casa em vez de uma rede de trabalho ou pública, e desliguem a VPN, se possível. Depois, entrem novamente na reunião.",
 
   meeting_error_title: 'Não foi possível entrar na reunião',
