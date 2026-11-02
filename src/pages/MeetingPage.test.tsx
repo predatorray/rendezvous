@@ -60,6 +60,20 @@ describe('MeetingPage ended screen', () => {
     ).toBeInTheDocument();
   });
 
+  it.each(['joining', 'live', 'error'])('shows connectivity advice while %s', (phase) => {
+    mockMeeting.phase = phase;
+    mockMeeting.turnUnavailable = true;
+    renderMeeting();
+    expect(screen.getByRole('alert')).toHaveTextContent(en.meeting_turn_unavailable);
+  });
+
+  it('does not warn when connection support is available', () => {
+    mockMeeting.phase = 'live';
+    mockMeeting.turnUnavailable = false;
+    renderMeeting();
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
   it('navigates home from the ended screen', () => {
     mockMeeting.endedReason = 'host-left';
     renderMeeting();

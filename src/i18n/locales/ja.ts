@@ -30,6 +30,8 @@ const ja = {
   meeting_starting: 'ミーティングを開始しています…',
   meeting_joining: 'ミーティングに参加しています…',
 
+  meeting_turn_unavailable: "接続を補助するサービスが現在利用できません。一部の参加者は会議への参加や音声・映像の共有がうまくいかない場合があります。接続しやすくするため、全員が職場や公共のネットワークではなく自宅の Wi-Fi など別のネットワークを試し、可能であれば VPN をオフにしてから、会議に入り直してください。",
+
   meeting_error_title: 'ミーティングに参加できませんでした',
   meeting_error_default: 'エラーが発生しました。',
   meeting_error_unavailable_id:

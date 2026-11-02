@@ -428,7 +428,7 @@ describe('MeetingClient metrics', () => {
       delete (global as any).fetch;
     });
 
-    async function startWithFetch(fetchImpl: jest.Mock) {
+    async function startWithFetch(fetchImpl: jest.Mock, turnAvailable = true) {
       process.env = {
         ...env,
         NODE_ENV: 'production',
@@ -440,6 +440,7 @@ describe('MeetingClient metrics', () => {
       jest.isolateModules(() => {
         Client = require('./MeetingClient').MeetingClient;
         mock = require('peerjs');
+        jest.spyOn(require('./checkTurn'), 'checkTurn').mockResolvedValue(turnAvailable);
       });
       const metrics = makeMetrics();
       const client = new Client({
@@ -448,6 +449,8 @@ describe('MeetingClient metrics', () => {
         isHost: true,
         metrics,
       });
+      const warning = jest.fn();
+      client.on('turnUnavailable', warning);
       const p = client.start(null);
       // Let the (mocked) fetch settle and the Peer get constructed.
       for (let i = 0; i < 20 && !mock.peerInstances.length; i++) {
@@ -457,7 +460,7 @@ describe('MeetingClient metrics', () => {
         'rendezvous-abcdef'
       );
       await p;
-      return metrics;
+      return Object.assign(metrics, { warning });
     }
 
     it('reports a network error when metered.ca is unreachable', async () => {
@@ -471,6 +474,7 @@ describe('MeetingClient metrics', () => {
         errorType: 'TypeError',
       });
       expect(metrics.meetingStarted).toHaveBeenCalled();
+      expect(metrics.warning).toHaveBeenCalledTimes(1);
     });
 
     it('reports a server error when metered.ca responds with an error', async () => {
@@ -483,6 +487,27 @@ describe('MeetingClient metrics', () => {
         category: 'network',
         errorType: 'server-error',
       });
+    });
+
+    it.each([[], [{ urls: 'stun:example.com' }], { error: 'Unavailable' }])(
+      'warns for an unusable credentials response: %j', async (body) => {
+        const metrics = await startWithFetch(
+          jest.fn().mockResolvedValue({ ok: true, json: async () => body })
+        );
+        expect(metrics.warning).toHaveBeenCalledTimes(1);
+        expect(metrics.meetingStarted).toHaveBeenCalled();
+      }
+    );
+
+    it.each([true, false])('warns only when the relay check fails (available: %s)', async (available) => {
+      const metrics = await startWithFetch(
+        jest.fn().mockResolvedValue({ ok: true, json: async () => [
+          { urls: ['stun:example.com', 'turns:example.com:443'], username: 'user', credential: 'pass' },
+        ] }), available
+      );
+      expect(metrics.warning).toHaveBeenCalledTimes(available ? 0 : 1);
+      expect(metrics.meetingStarted).toHaveBeenCalled();
+      expect(metrics.connectionError).not.toHaveBeenCalled();
     });
 
     it('reports nothing when the fetch succeeds', async () => {

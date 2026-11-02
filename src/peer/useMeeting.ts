@@ -19,6 +19,7 @@ export type MeetingPhase =
 export interface UseMeetingState {
   phase: MeetingPhase;
   errorMessage: string | null;
+  turnUnavailable: boolean;
   endedReason: 'host-left' | 'self-left' | 'kicked' | null;
   selfId: string;
   members: Member[];
@@ -59,6 +60,7 @@ export function useMeeting({
   isHost,
 }: UseMeetingArgs): UseMeetingState {
   const t = useT();
+  const [turnUnavailable, setTurnUnavailable] = useState(false);
   const [phase, setPhase] = useState<MeetingPhase>('preparing');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [endedReason, setEndedReason] = useState<
@@ -96,6 +98,7 @@ export function useMeeting({
 
     const unsubs: Array<() => void> = [];
 
+    unsubs.push(client.on('turnUnavailable', () => setTurnUnavailable(true)));
     unsubs.push(client.on('ready', (id) => setSelfId(id)));
     unsubs.push(
       client.on('members', (m) => {
@@ -223,6 +226,7 @@ export function useMeeting({
   }, []);
 
   return {
+    turnUnavailable,
     phase,
     errorMessage,
     endedReason,
