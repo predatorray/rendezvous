@@ -45,6 +45,7 @@ jobs:
           # Empty for fork PRs (no secrets), which falls back to PeerJS's
           # default ICE servers.
           REACT_APP_METERED_API_KEY: ${{ secrets.METERED_API_KEY }}
+          TURNIX_API_TOKEN: ${{ secrets.TURNIX_API_TOKEN }}
       - name: Check Google Analytics is not included
         # Looks for a substituted measurement ID rather than the loader code,
         # so it doesn't depend on the minifier stripping the inert loader.

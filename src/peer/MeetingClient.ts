@@ -1,5 +1,6 @@
 import Peer, { DataConnection, MediaConnection } from 'peerjs';
 import { checkTurn } from './checkTurn';
+import { fetchIceServers } from './iceServers';
 import {
   ChatMessage,
   Member,
@@ -43,58 +44,6 @@ export interface MeetingEvents {
 
 type EventName = keyof MeetingEvents;
 type Listener<K extends EventName> = MeetingEvents[K];
-
-/**
- * metered.ca TURN/STUN credentials endpoint. The API key is injected at build
- * time from the REACT_APP_METERED_API_KEY env var (set by the GitHub publish
- * workflow). Since this is a fully serverless / backend-less app, the key is
- * inlined into the client bundle as plaintext — that is expected and accepted.
- */
-const METERED_CREDENTIALS_URL =
-  'https://predatorray.metered.live/api/v1/turn/credentials';
-const METERED_API_KEY = process.env.REACT_APP_METERED_API_KEY;
-
-/**
- * Fetches ICE servers from metered.ca for production builds only. Unit tests
- * (NODE_ENV=test) and e2e tests (CRA dev server, NODE_ENV=development) fall
- * back to PeerJS's built-in default ICE servers by returning null.
- */
-async function fetchIceServers(
-  onError: (err: unknown) => void
-): Promise<RTCIceServer[] | null> {
-  if (process.env.NODE_ENV !== 'production' || !METERED_API_KEY) {
-    return null;
-  }
-  try {
-    const response = await fetch(
-      `${METERED_CREDENTIALS_URL}?apiKey=${METERED_API_KEY}`
-    );
-    if (!response.ok) {
-      throw Object.assign(
-        new Error(`metered.ca responded with ${response.status}`),
-        { type: 'server-error' }
-      );
-    }
-    const servers: unknown = await response.json();
-    if (
-      !Array.isArray(servers) ||
-      !servers.every((server) =>
-        server && (typeof server.urls === 'string' ||
-          (Array.isArray(server.urls) &&
-            server.urls.every((url: unknown) => typeof url === 'string')))
-      )
-    ) {
-      throw Object.assign(new Error('Invalid ICE servers response'), {
-        type: 'server-error',
-      });
-    }
-    return servers as RTCIceServer[];
-  } catch (e) {
-    console.error('Failed to fetch ICE servers from metered.ca', e);
-    onError(e);
-    return null;
-  }
-}
 
 interface ConstructorArgs {
   code: string;
@@ -196,10 +145,9 @@ export class MeetingClient {
     const peerId = this.isHost ? this.hostId : randomClientPeerId(this.code);
     const iceServers = await fetchIceServers((e) => {
       this.reportConnectionError('ice-servers', e, 'network');
-      this.emit('turnUnavailable');
     });
     if (this.turnCheck.signal.aborted) return;
-    if (process.env.NODE_ENV === 'production' && !METERED_API_KEY) {
+    if (process.env.NODE_ENV === 'production' && !iceServers?.length) {
       this.emit('turnUnavailable');
     }
     if (iceServers) {
