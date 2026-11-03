@@ -172,7 +172,7 @@ flowchart LR
   traffic is proxied by a third-party server rather than flowing directly
   between peers.
 
-- If connection support from Metered is unavailable, the app warns participants
+- If connection support from both Metered and Turnix is unavailable, the app warns participants
   to try another network (such as home Wi-Fi) and disconnect their VPN if possible,
   then rejoin. Direct connections can still work. The app checks credentials and
   runs a background relay-only ICE check, closing it on success or after 10 seconds.
@@ -183,6 +183,41 @@ flowchart LR
   [Get Credential](https://www.metered.ca/docs/turn-rest-api/get-credential/)
   documents no quota-specific HTTP error. A successful credentials response alone
   is therefore insufficient to confirm relay availability.
+
+## TURN providers and credential refresh
+
+Production supplies WebRTC with both Metered and Turnix ICE servers. Each list is
+loaded independently; a failed provider does not discard the other provider's
+servers. The relay availability check tests the combined list, so a working
+provider prevents the connectivity warning.
+
+Metered credentials are fetched at runtime using `METERED_API_KEY` (as before).
+Turnix blocks cross-origin browser API calls. Instead, `npm run build` first runs
+`scripts/generate-turnix-credentials.cjs` to request seven-day credentials and
+write `public/turnix-ice-servers.json`. This generated file is ignored by Git.
+Only expiring TURN usernames/passwords are published; the Turnix API token is
+never included in the browser bundle or credential file. Public TURN credentials
+can still be used by others to consume the account's allowance.
+
+Configure repository **Settings → Secrets and variables → Actions → New repository
+secret** with name `TURNIX_API_TOKEN` and your Turnix API token as its value.
+Both production and PR preview builds use this secret. For local production builds,
+provide `TURNIX_API_TOKEN` through your environment. Do not prefix it with
+`REACT_APP_` or commit it to an environment file.
+
+The production publish workflow runs daily at 04:23 UTC to refresh the seven-day
+credentials, as well as on pushes to main and manual dispatch. Monitor workflow
+warnings: GitHub schedules can be delayed or disabled after repository inactivity.
+Missing secrets produce an empty Turnix file; API failures (including quota HTTP
+429) produce a workflow warning and an empty file, allowing Metered to continue.
+The API token and upstream response bodies are never logged. Browsers reject
+expired Turnix files and request them without caching. Existing tabs must reload
+before their loaded credentials expire to use Turnix for new relay allocations.
+PR previews refresh when rebuilt and expire after seven days without another build.
+
+Turnix API references: [credentials](https://turnix.io/docs/api-reference/credentials),
+[usage limits](https://turnix.io/docs/concepts/usage-limits). The seven-day TTL was
+verified against the live API; relay connectivity still depends on network access.
 
 [1]: https://github.com/predatorray/rendezvous/blob/main/LICENSE
 [2]: https://github.com/predatorray/rendezvous/actions/workflows/ci.yml

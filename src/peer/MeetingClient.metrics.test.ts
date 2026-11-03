@@ -428,13 +428,20 @@ describe('MeetingClient metrics', () => {
       delete (global as any).fetch;
     });
 
-    async function startWithFetch(fetchImpl: jest.Mock, turnAvailable = true) {
+    async function startWithFetch(
+      fetchImpl: jest.Mock,
+      turnAvailable = true,
+      turnix = { iceServers: [] as RTCIceServer[], expiresAt: null as string | null }
+    ) {
       process.env = {
         ...env,
         NODE_ENV: 'production',
         REACT_APP_METERED_API_KEY: 'key',
       };
-      (global as any).fetch = fetchImpl;
+      (global as any).fetch = (url: string, options: RequestInit) =>
+        url.includes('metered.live') ? fetchImpl(url, options) : Promise.resolve({
+          ok: true, json: async () => turnix,
+        });
       let Client!: typeof MeetingClient;
       let mock!: typeof mockModule;
       jest.isolateModules(() => {
@@ -508,6 +515,16 @@ describe('MeetingClient metrics', () => {
       expect(metrics.warning).toHaveBeenCalledTimes(available ? 0 : 1);
       expect(metrics.meetingStarted).toHaveBeenCalled();
       expect(metrics.connectionError).not.toHaveBeenCalled();
+    });
+
+    it('does not warn when Metered fails but Turnix has a working relay', async () => {
+      const metrics = await startWithFetch(jest.fn().mockResolvedValue({ ok: false, status: 503 }), true, {
+        iceServers: [{ urls: 'turn:turnix.example:3478', username: 'user', credential: 'password' }],
+        expiresAt: new Date(Date.now() + 604800000).toISOString(),
+      });
+      expect(metrics.connectionError).toHaveBeenCalledTimes(1);
+      expect(metrics.warning).not.toHaveBeenCalled();
+      expect(metrics.meetingStarted).toHaveBeenCalled();
     });
 
     it('reports nothing when the fetch succeeds', async () => {

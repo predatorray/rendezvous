@@ -1,6 +1,9 @@
 name: publish
 
 on:
+  # Refresh the seven-day Turnix credentials daily.
+  schedule:
+    - cron: '23 4 * * *'
   workflow_dispatch:
   push:
     branches:
@@ -30,6 +33,7 @@ jobs:
       - run: npm run build
         env:
           REACT_APP_METERED_API_KEY: ${{ secrets.METERED_API_KEY }}
+          TURNIX_API_TOKEN: ${{ secrets.TURNIX_API_TOKEN }}
       - name: Deploy to gh-pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
