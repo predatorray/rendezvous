@@ -94,3 +94,17 @@ describe('useMeeting media teardown', () => {
     tracks.forEach((t) => expect(t.stop).toHaveBeenCalled());
   });
 });
+
+
+describe('useMeeting connectivity warning', () => {
+  it('keeps the meeting live and preserves the warning on connection failure', async () => {
+    const { result, client } = await startMeeting();
+    expect(result.current.turnUnavailable).toBe(false);
+    act(() => client.emit('turnUnavailable'));
+    expect(result.current.turnUnavailable).toBe(true);
+    expect(result.current.phase).toBe('live');
+    act(() => client.emit('ended', 'error', 'Connection failed'));
+    expect(result.current.phase).toBe('error');
+    expect(result.current.turnUnavailable).toBe(true);
+  });
+});

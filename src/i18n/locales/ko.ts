@@ -30,6 +30,9 @@ const ko = {
   meeting_starting: '회의를 시작하는 중…',
   meeting_joining: '회의에 참여하는 중…',
 
+  meeting_dismiss_warning: "경고 닫기",
+  meeting_turn_unavailable: "현재 연결 지원 서비스를 사용할 수 없습니다. 일부 참가자는 회의 참여나 오디오 및 비디오 공유에 어려움을 겪을 수 있습니다. 연결 가능성을 높이려면 모두 회사나 공공 네트워크 대신 집 Wi-Fi 등 다른 네트워크를 사용하고, 가능하면 VPN을 끈 뒤 회의에 다시 참여해 주세요.",
+
   meeting_error_title: '회의에 참여할 수 없습니다',
   meeting_error_default: '오류가 발생했습니다.',
   meeting_error_unavailable_id:

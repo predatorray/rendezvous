@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import {
+  Alert,
   Box,
   Button,
   CircularProgress,
@@ -112,9 +113,22 @@ function LiveMeeting({
   const meeting = useMeeting({ code, name, isHost });
   const isSpeaking = useIsSpeaking(meeting.localStream, meeting.audioEnabled);
 
+  const [warningDismissed, setWarningDismissed] = useState(false);
+  const connectivityWarning = meeting.turnUnavailable && !warningDismissed ? (
+    <Alert
+      severity="warning"
+      onClose={() => setWarningDismissed(true)}
+      closeText={t.meeting_dismiss_warning}
+      sx={{ mb: 2, textAlign: 'left' }}
+    >
+      {t.meeting_turn_unavailable}
+    </Alert>
+  ) : null;
+
   if (meeting.phase === 'preparing' || meeting.phase === 'joining') {
     return (
       <CenteredCard>
+        {connectivityWarning}
         <Stack alignItems="center" spacing={2}>
           <CircularProgress size={28} />
           <Typography variant="body1">
@@ -138,6 +152,7 @@ function LiveMeeting({
         <Typography variant="body2" sx={{ opacity: 0.7, mb: 3 }}>
           {meeting.errorMessage}
         </Typography>
+        {connectivityWarning}
         <Button variant="contained" onClick={() => navigate('/')}>
           {t.meeting_back_home}
         </Button>
@@ -177,6 +192,7 @@ function LiveMeeting({
       audioEnabled={meeting.audioEnabled}
       videoEnabled={meeting.videoEnabled}
       isSpeaking={isSpeaking}
+      connectivityWarning={connectivityWarning}
       autoShareWhenAlone
       onToggleAudio={meeting.toggleAudio}
       onToggleVideo={meeting.toggleVideo}

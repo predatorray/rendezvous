@@ -1,4 +1,5 @@
 import Peer, { DataConnection, MediaConnection } from 'peerjs';
+import { checkTurn } from './checkTurn';
 import {
   ChatMessage,
   Member,
@@ -37,6 +38,7 @@ export interface MeetingEvents {
     detail?: string
   ) => void;
   ready: (selfId: string) => void;
+  turnUnavailable: () => void;
 }
 
 type EventName = keyof MeetingEvents;
@@ -73,7 +75,20 @@ async function fetchIceServers(
         { type: 'server-error' }
       );
     }
-    return (await response.json()) as RTCIceServer[];
+    const servers: unknown = await response.json();
+    if (
+      !Array.isArray(servers) ||
+      !servers.every((server) =>
+        server && (typeof server.urls === 'string' ||
+          (Array.isArray(server.urls) &&
+            server.urls.every((url: unknown) => typeof url === 'string')))
+      )
+    ) {
+      throw Object.assign(new Error('Invalid ICE servers response'), {
+        type: 'server-error',
+      });
+    }
+    return servers as RTCIceServer[];
   } catch (e) {
     console.error('Failed to fetch ICE servers from metered.ca', e);
     onError(e);
@@ -102,6 +117,7 @@ export class MeetingClient {
   readonly isHost: boolean;
   private name: string;
   private peer: Peer | null = null;
+  private turnCheck = new AbortController();
   private hostId: string;
   private selfId: string = '';
   private localStream: MediaStream | null = null;
@@ -178,12 +194,32 @@ export class MeetingClient {
     this.videoEnabled = stream?.getVideoTracks()[0]?.enabled ?? false;
 
     const peerId = this.isHost ? this.hostId : randomClientPeerId(this.code);
-    const iceServers = await fetchIceServers((e) =>
-      this.reportConnectionError('ice-servers', e, 'network')
-    );
+    const iceServers = await fetchIceServers((e) => {
+      this.reportConnectionError('ice-servers', e, 'network');
+      this.emit('turnUnavailable');
+    });
+    if (this.turnCheck.signal.aborted) return;
+    if (process.env.NODE_ENV === 'production' && !METERED_API_KEY) {
+      this.emit('turnUnavailable');
+    }
+    if (iceServers) {
+      const hasTurn = iceServers.some((server) =>
+        (Array.isArray(server.urls) ? server.urls : [server.urls])
+          .some((url) => /^turns?:/i.test(url))
+      );
+      if (!hasTurn) {
+        this.emit('turnUnavailable');
+      } else {
+        void checkTurn(iceServers, this.turnCheck.signal).then((available) => {
+          if (!available && !this.turnCheck.signal.aborted) {
+            this.emit('turnUnavailable');
+          }
+        });
+      }
+    }
     this.peer = new Peer(peerId, {
       debug: 1,
-      ...(iceServers ? { config: { iceServers } } : {}),
+      ...(iceServers?.length ? { config: { iceServers } } : {}),
     });
 
     await new Promise<void>((resolve, reject) => {
@@ -702,6 +738,7 @@ export class MeetingClient {
   // ---- Teardown ----
 
   private shutdown(): void {
+    this.turnCheck.abort();
     this.removePageHideListener();
     try {
       this.peer?.destroy();

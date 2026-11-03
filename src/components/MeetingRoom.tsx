@@ -46,6 +46,7 @@ export interface MeetingRoomProps {
   onLeave: () => void;
   // Optional label shown next to the meeting code (e.g. a "Demo" badge).
   bannerText?: string;
+  connectivityWarning?: React.ReactNode;
   // When true, auto-open the share dialog once if the user is the host and
   // is currently alone in the room (used to prompt fresh hosts to invite).
   autoShareWhenAlone?: boolean;
@@ -71,6 +72,7 @@ export default function MeetingRoom({
   onKick,
   onLeave,
   bannerText,
+  connectivityWarning,
   autoShareWhenAlone,
 }: MeetingRoomProps) {
   const t = useT();
@@ -178,6 +180,7 @@ export default function MeetingRoom({
         bgcolor: '#000',
       }}
     >
+      {connectivityWarning}
       <Box
         sx={{
           flex: 1,

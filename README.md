@@ -172,5 +172,17 @@ flowchart LR
   traffic is proxied by a third-party server rather than flowing directly
   between peers.
 
+- If connection support from Metered is unavailable, the app warns participants
+  to try another network (such as home Wi-Fi) and disconnect their VPN if possible,
+  then rejoin. Direct connections can still work. The app checks credentials and
+  runs a background relay-only ICE check, closing it on success or after 10 seconds.
+  This sends no media and does not delay joining. A failed check indicates that
+  relay support could not be reached from this browser; it does not identify the cause.
+  [Metered's quota documentation](https://www.metered.ca/docs/turn-rest-api/project/index/)
+  explains that quota enforcement can disable credentials, while
+  [Get Credential](https://www.metered.ca/docs/turn-rest-api/get-credential/)
+  documents no quota-specific HTTP error. A successful credentials response alone
+  is therefore insufficient to confirm relay availability.
+
 [1]: https://github.com/predatorray/rendezvous/blob/main/LICENSE
 [2]: https://github.com/predatorray/rendezvous/actions/workflows/ci.yml
